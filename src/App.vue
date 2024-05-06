@@ -16,19 +16,18 @@
       <v-list>
         <v-list-item link title="My Account"></v-list-item>
         <v-list-item link title="Datasets">
-          <router-link to="datasets"/>
+          <router-link to="datasets" />
         </v-list-item>
         <v-list-item link title="Log out"></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <v-main class="d-flex align-center justify-center">
-      <router-view/>
+    <v-main>
+      <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script setup>
-const drawer = defineModel()
-
+const drawer = defineModel();
 </script>
