@@ -15,12 +15,16 @@
     <v-navigation-drawer v-model="drawer" location="right">
       <v-list>
         <v-list-item link title="My Account"></v-list-item>
-        <v-list-item link title="Datasets"></v-list-item>
+        <v-list-item link title="Datasets">
+          <router-link to="datasets"/>
+        </v-list-item>
         <v-list-item link title="Log out"></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <v-main class="d-flex align-center justify-center"> Main Content </v-main>
+    <v-main class="d-flex align-center justify-center">
+      <router-view/>
+    </v-main>
   </v-app>
 </template>
 
