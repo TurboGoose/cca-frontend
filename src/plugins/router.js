@@ -4,8 +4,18 @@ import { createWebHistory, createRouter } from "vue-router";
 const routes = [
   {
     path: "/",
+    redirect: "/datasets"
+  },
+  {
+    path: "/datasets",
     name: "datasets",
     component: () => import('@/components/datasets/DatasetView.vue'),
+    children: [
+      // {
+        // path: "/:datasetId",
+        // component: () => import("@/components/datasets/Dataset.vue"),
+      // },
+    ],
   },
   {
     path: '/:catchAll(.*)*',
