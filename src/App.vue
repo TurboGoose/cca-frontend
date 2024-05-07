@@ -12,7 +12,7 @@
       </template>
     </v-app-bar>
 
-    <v-navigation-drawer v-model="drawer" location="right">
+    <v-navigation-drawer v-model="drawer" location="right" temporary>
       <v-list>
         <v-list-item link title="My Account"></v-list-item>
         <v-list-item link title="Datasets">
@@ -29,5 +29,5 @@
 </template>
 
 <script setup>
-const drawer = defineModel();
+const drawer = defineModel({ default: false });
 </script>
