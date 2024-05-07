@@ -1,4 +1,5 @@
 import { api } from "@/plugins";
+import axios from "axios";
 
 export const datasetsAPI = {
   getDatasets: async () => {
@@ -43,5 +44,21 @@ export const datasetsAPI = {
       totalRows: 100500,
       created: "2024-05-07T16:35:21.5735",
     };
+  },
+
+  updateDataset: async (datasetId, newName) => {
+    // return api
+    //   .patch(`api/datasets/${datasetId}`, {
+    //     newName: newName,
+    //   })
+    //   .then((res) => res.data);
+
+      return {
+        id: 11,
+        name: "renamedDatset",
+        size: 1094533,
+        totalRows: 100500,
+        created: "2024-05-07T16:35:21.5735",
+      };
   },
 };
