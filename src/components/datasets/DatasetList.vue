@@ -7,7 +7,7 @@
       <v-icon class="me-2" size="small" @click="openRenameDialog(item)">
         mdi-pencil
       </v-icon>
-      <v-icon class="me-4" size="small" @click="openDeleteDialog(item)">
+      <v-icon class="me-4" size="small" @click="deleteDataset(item)">
         mdi-delete
       </v-icon>
     </template>
@@ -155,7 +155,11 @@ const openRenameDialog = (datasetItem) => {
 
 const renameDataset = async () => {
   if (renamedItem.value.name !== newName.value) {
-    datasetsAPI.updateDataset(renamedItem.value.id, newName.value);
+    const renamed = await datasetsAPI.updateDataset(
+      renamedItem.value.id,
+      newName.value
+    );
+    // handle error
     renamedItem.value.name = newName.value;
   }
   newName.value = "";
@@ -168,15 +172,28 @@ const closeRenameDialog = async () => {
   newName.value = "";
 };
 
+const deleteDataset = async (datasetItem) => {
+  const success = await datasetsAPI.deleteDataset(datasetItem.id)
+  if (success) {
+    const index = props.datasets.indexOf(datasetItem);
+    props.datasets.splice(index, 1);
+  }
+}
+
 const headers = [
   { title: "Name", value: "name" },
-  { title: "Size", key: "size", value: (item) => convertBytes(item.size, 2) },
-  { title: "Rows", value: "totalRows" },
+  {
+    title: "Size",
+    key: "size",
+    value: (item) => convertBytes(item.size, 2),
+    sortable: false,
+  },
+  { title: "Rows", value: "totalRows", sortable: false },
   {
     title: "Created",
     key: "created",
     value: (item) => reformatTimestamp(item.created),
   },
-  { title: "", key: "actions", align: "end" },
+  { title: "", key: "actions", align: "end", sortable: false },
 ];
 </script>

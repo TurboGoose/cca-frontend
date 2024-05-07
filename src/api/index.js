@@ -53,12 +53,22 @@ export const datasetsAPI = {
     //   })
     //   .then((res) => res.data);
 
-      return {
-        id: 11,
-        name: "renamedDatset",
-        size: 1094533,
-        totalRows: 100500,
-        created: "2024-05-07T16:35:21.5735",
-      };
+    return {
+      id: 11,
+      name: "renamedDatset",
+      size: 1094533,
+      totalRows: 100500,
+      created: "2024-05-07T16:35:21.5735",
+    };
+  },
+
+  deleteDataset: async (datasetId) => {
+    // return api
+    //   .delete(`api/datasets/${datasetId}`)
+    //   .then((res) => res.status === 200)
+    //   .catch((error) => {
+    //     return false;
+    //   });
+    return true;
   },
 };
