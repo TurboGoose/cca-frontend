@@ -13,6 +13,6 @@ export const convertBytes = (bytes, decimals) => {
     return resp;
   };
   
-  export const reformatTimestamp = (timestamp) => {
+  export const formatTimestamp = (timestamp) => {
     return new Date(timestamp).toLocaleString();
   };

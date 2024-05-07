@@ -1,8 +1,17 @@
 <template>
-  <v-data-table :headers="headers" :items="datasets">
+  <v-data-table :headers="headers" :items="datasets" :search="search">
     <template v-slot:item.name="{ item }">
       <router-link :to="`datasets/${item.id}`">{{ item.name }}</router-link>
     </template>
+
+    <template v-slot:item.size="{ item }">
+      {{ convertBytes(item.size, 2) }}
+    </template>
+
+    <template v-slot:item.created="{ item }">
+      {{ formatTimestamp(item.created) }}
+    </template>
+
     <template v-slot:item.actions="{ item }">
       <v-icon class="me-2" size="small" @click="openRenameDialog(item)">
         mdi-pencil
@@ -101,12 +110,6 @@
       </v-toolbar>
     </template>
 
-    <!-- <template v-slot:item.actions="{ item }">
-      <v-icon class="me-2" size="small" @click="editItem(item)">
-        mdi-pencil
-      </v-icon>
-      <v-icon size="small" @click="deleteItem(item)"> mdi-delete </v-icon>
-    </template> -->
     <template v-slot:no-data>
       <h3>No datasets uploaded</h3>
     </template>
@@ -116,7 +119,7 @@
 <script setup>
 import { nextTick, ref } from "vue";
 import { datasetsAPI } from "@/api";
-import { convertBytes, reformatTimestamp } from "@/util";
+import { convertBytes, formatTimestamp } from "@/util";
 
 const props = defineProps({
   datasets: {
@@ -173,27 +176,40 @@ const closeRenameDialog = async () => {
 };
 
 const deleteDataset = async (datasetItem) => {
-  const success = await datasetsAPI.deleteDataset(datasetItem.id)
+  const success = await datasetsAPI.deleteDataset(datasetItem.id);
   if (success) {
     const index = props.datasets.indexOf(datasetItem);
     props.datasets.splice(index, 1);
   }
-}
+};
 
 const headers = [
-  { title: "Name", value: "name" },
+  {
+    title: "Name",
+    key: "name",
+  },
   {
     title: "Size",
     key: "size",
-    value: (item) => convertBytes(item.size, 2),
-    sortable: false,
+    filterable: false,
   },
-  { title: "Rows", value: "totalRows", sortable: false },
+  {
+    title: "Rows",
+    key: "totalRows",
+    filterable: false,
+  },
   {
     title: "Created",
     key: "created",
-    value: (item) => reformatTimestamp(item.created),
+    value: (item) => new Date(item.created).getTime(),
+    filterable: false,
   },
-  { title: "", key: "actions", align: "end", sortable: false },
+  {
+    title: "",
+    key: "actions",
+    align: "end",
+    filterable: false,
+    sortable: false,
+  },
 ];
 </script>
