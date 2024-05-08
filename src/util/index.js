@@ -11,8 +11,12 @@ export const convertBytes = (bytes, decimals) => {
       SIZES[i];
   
     return resp;
-  };
+};
   
-  export const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
-  };
+export const formatTimestamp = (timestamp) => {
+  return new Date(timestamp).toLocaleString();
+};
+
+export const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};

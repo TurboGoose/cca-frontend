@@ -164,7 +164,7 @@ const headers = [
 
 const loadDatasetList = async () => {
   try {
-    datasets.value = await datasetsAPI.getDatasets();
+    datasets.value = await datasetsAPI.getDatasetList();
   } catch (error) {
     console.log(error);
   }
