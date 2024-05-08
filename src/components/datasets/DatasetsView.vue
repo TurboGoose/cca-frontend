@@ -117,16 +117,11 @@
 </template>
 
 <script setup>
-import { nextTick, ref } from "vue";
+import { onBeforeMount, nextTick, ref } from "vue";
 import { datasetsAPI } from "@/api";
 import { convertBytes, formatTimestamp } from "@/util";
 
-const props = defineProps({
-  datasets: {
-    type: Array,
-    required: true,
-  },
-});
+const datasets = ref([]);
 
 const search = ref("");
 
@@ -137,10 +132,50 @@ const renameDialog = ref(false);
 const renamedItem = ref();
 const newName = ref("");
 
+const headers = [
+  {
+    title: "Name",
+    key: "name",
+  },
+  {
+    title: "Size",
+    key: "size",
+    filterable: false,
+  },
+  {
+    title: "Rows",
+    key: "totalRows",
+    filterable: false,
+  },
+  {
+    title: "Created",
+    key: "created",
+    value: (item) => new Date(item.created).getTime(),
+    filterable: false,
+  },
+  {
+    title: "",
+    key: "actions",
+    align: "end",
+    filterable: false,
+    sortable: false,
+  },
+];
+
+const loadDatasetList = async () => {
+  try {
+    datasets.value = await datasetsAPI.getDatasets();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+onBeforeMount(() => loadDatasetList());
+
 const uploadDataset = async () => {
   datasetsAPI
     .uploadDataset(uploadedFile)
-    .then((newDataset) => props.datasets.push(newDataset));
+    .then((newDataset) => datasets.value.push(newDataset));
   closeUploadDialog();
 };
 
@@ -178,38 +213,8 @@ const closeRenameDialog = async () => {
 const deleteDataset = async (datasetItem) => {
   const success = await datasetsAPI.deleteDataset(datasetItem.id);
   if (success) {
-    const index = props.datasets.indexOf(datasetItem);
-    props.datasets.splice(index, 1);
+    const index = datasets.value.indexOf(datasetItem);
+    datasets.value.splice(index, 1);
   }
 };
-
-const headers = [
-  {
-    title: "Name",
-    key: "name",
-  },
-  {
-    title: "Size",
-    key: "size",
-    filterable: false,
-  },
-  {
-    title: "Rows",
-    key: "totalRows",
-    filterable: false,
-  },
-  {
-    title: "Created",
-    key: "created",
-    value: (item) => new Date(item.created).getTime(),
-    filterable: false,
-  },
-  {
-    title: "",
-    key: "actions",
-    align: "end",
-    filterable: false,
-    sortable: false,
-  },
-];
 </script>

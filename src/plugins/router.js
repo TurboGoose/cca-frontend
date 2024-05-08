@@ -9,7 +9,7 @@ const routes = [
   {
     path: "/datasets",
     name: "datasets",
-    component: () => import('@/components/datasets/DatasetView.vue'),
+    component: () => import('@/components/datasets/DatasetsView.vue'),
     children: [
       // {
         // path: "/:datasetId",
