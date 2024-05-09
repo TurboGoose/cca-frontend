@@ -152,4 +152,13 @@ export const datasetsAPI = {
     const offset = page * size;
     return arr.slice(offset, offset + size);
   },
+
+  isDatasetReadyForSearch: async (datasetId) => {
+    // return api
+    //   .get(`/api/datasets/${datasetId}/search/ready`)
+    //   .then((res) => res.data);
+    return {
+      isReadyForSearch: true,
+    };
+  },
 };

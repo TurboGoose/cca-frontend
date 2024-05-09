@@ -165,10 +165,10 @@ import { datasetsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
-const tab = defineModel();
 const route = useRoute();
 
 const isSearchUnavailable = ref(true);
+const search = ref("");
 
 const currentLabel = ref("label");
 const labelHeaders = [
@@ -219,6 +219,23 @@ const loadDatasetHeaders = () => {
     })
     .catch((err) => console.log(err));
 };
+
+const pingDatasetSearchStatus = async () => {
+  const isReady = await datasetsAPI
+    .isDatasetReadyForSearch(route.params.datasetId)
+    .then((res) => res.isReadyForSearch)
+    .catch((err) => {
+      console.log(err);
+      return false;
+    });
+  console.log(isReady);
+  if (isReady) {
+    isSearchUnavailable.value = false;
+  } else {
+    setTimeout(pingDatasetSearchStatus, 5000);
+  }
+};
+pingDatasetSearchStatus();
 
 onBeforeMount(() => loadDatasetHeaders());
 </script>
