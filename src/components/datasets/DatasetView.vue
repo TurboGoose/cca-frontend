@@ -16,128 +16,131 @@
 
           <v-card-text>
             <v-data-table-virtual
-            :headers="headers"
-            :items="datasets"
-            :search="search"
-            density="compact"
-          >
-            <template v-slot:item.actions="{ item }">
-              <v-icon class="me-2" size="small" @click="openRenameDialog(item)">
-                mdi-pencil
-              </v-icon>
-              <v-icon class="me-4" size="small" @click="deleteDataset(item)">
-                mdi-delete
-              </v-icon>
-            </template>
+              :headers="headers"
+              :items="datasets"
+              :search="search"
+              density="compact"
+            >
+              <template v-slot:item.actions="{ item }">
+                <v-icon
+                  class="me-2"
+                  size="small"
+                  @click="openRenameDialog(item)"
+                >
+                  mdi-pencil
+                </v-icon>
+                <v-icon class="me-4" size="small" @click="deleteDataset(item)">
+                  mdi-delete
+                </v-icon>
+              </template>
 
-            <template v-slot:top>
-              <v-toolbar flat>
-                <v-spacer></v-spacer>
-                <v-text-field
-                  v-model="search"
-                  density="compact"
-                  label="Search"
-                  prepend-inner-icon="mdi-magnify"
-                  variant="solo-filled"
-                  flat
-                  hide-details
-                  single-line
-                ></v-text-field>
+              <template v-slot:top>
+                <v-toolbar flat>
+                  <v-spacer></v-spacer>
+                  <v-text-field
+                    v-model="search"
+                    density="compact"
+                    label="Search"
+                    prepend-inner-icon="mdi-magnify"
+                    variant="solo-filled"
+                    flat
+                    hide-details
+                    single-line
+                  ></v-text-field>
 
-                <v-dialog v-model="addLabelDialog" max-width="500px">
-                  <template v-slot:activator="{ props: addLabelDialog }">
-                    <v-btn
-                      class="mb-2"
-                      color="primary"
-                      dark
-                      v-bind="addLabelDialog"
-                    >
-                      Add
-                    </v-btn>
-                  </template>
-                  <v-card>
-                    <v-card-title>
-                      <span class="text-h5">Add label</span>
-                    </v-card-title>
-
-                    <v-card-text>
-                      <v-text-field
-                        v-model="newLabelName"
-                        label="New label name"
-                      ></v-text-field>
-                    </v-card-text>
-
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
+                  <v-dialog v-model="addLabelDialog" max-width="500px">
+                    <template v-slot:activator="{ props: addLabelDialog }">
                       <v-btn
-                        color="blue-darken-1"
-                        variant="text"
-                        @click="closeUploadDialog"
-                      >
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        color="blue-darken-1"
-                        variant="text"
-                        @click="uploadDataset"
+                        class="mb-2"
+                        color="primary"
+                        dark
+                        v-bind="addLabelDialog"
                       >
                         Add
                       </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
+                    </template>
+                    <v-card>
+                      <v-card-title>
+                        <span class="text-h5">Add label</span>
+                      </v-card-title>
 
-                <v-dialog v-model="renameDialog" max-width="500px">
-                  <v-card>
-                    <v-card-title>
-                      <span class="text-h5">Rename dataset</span>
-                    </v-card-title>
+                      <v-card-text>
+                        <v-text-field
+                          v-model="newLabelName"
+                          label="New label name"
+                        ></v-text-field>
+                      </v-card-text>
 
-                    <v-card-text>
-                      <v-text-field
-                        v-model="newName"
-                        label="New dataset name"
-                      ></v-text-field>
-                    </v-card-text>
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          color="blue-darken-1"
+                          variant="text"
+                          @click="closeUploadDialog"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="blue-darken-1"
+                          variant="text"
+                          @click="uploadDataset"
+                        >
+                          Add
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-dialog>
 
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        color="blue-darken-1"
-                        variant="text"
-                        @click="closeRenameDialog"
-                      >
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        color="blue-darken-1"
-                        variant="text"
-                        @click="renameDataset"
-                      >
-                        Save
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-              </v-toolbar>
-            </template>
+                  <v-dialog v-model="renameDialog" max-width="500px">
+                    <v-card>
+                      <v-card-title>
+                        <span class="text-h5">Rename dataset</span>
+                      </v-card-title>
 
-            <template v-slot:no-data>
-              <h3>No labels</h3>
-            </template>
-          </v-data-table-virtual>
+                      <v-card-text>
+                        <v-text-field
+                          v-model="newName"
+                          label="New dataset name"
+                        ></v-text-field>
+                      </v-card-text>
+
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          color="blue-darken-1"
+                          variant="text"
+                          @click="closeRenameDialog"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="blue-darken-1"
+                          variant="text"
+                          @click="renameDataset"
+                        >
+                          Save
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-dialog>
+                </v-toolbar>
+              </template>
+
+              <template v-slot:no-data>
+                <h3>No labels</h3>
+              </template>
+            </v-data-table-virtual>
           </v-card-text>
-
         </v-card>
       </v-navigation-drawer>
       <v-data-table-server
-        v-if="tableHeaders"
-        v-model:items-per-page="itemsPerPage"
-        :items="serverItems"
-        :headers="tableHeaders"
-        :items-length="totalItems"
-        :loading="loading"
-        @update:options="loadItems"
+        v-if="annotateHeaders"
+        v-model:items-per-page="annotateItemsPerPage"
+        :items="annotateItems"
+        :headers="annotateHeaders"
+        :items-length="annotateTotalItems"
+        :loading="annotateLoading"
+        @update:options="loadItemsForAnnotate"
       >
         <template v-slot:item.labels="{ item }">
           <v-chip-group>
@@ -155,18 +158,64 @@
       </v-data-table-server>
     </v-tabs-window-item>
 
-    <v-tabs-window-item value="search"> Search</v-tabs-window-item>
+    <v-tabs-window-item value="search">
+      <v-toolbar flat>
+        <v-text-field
+          v-model="searchQuery"
+          density="compact"
+          label="Search"
+          prepend-inner-icon="mdi-magnify"
+          variant="solo-filled"
+          flat
+          hide-details
+          single-line
+        ></v-text-field>
+      </v-toolbar>
+
+      <v-data-table-server
+        v-if="searchHeaders"
+        v-model:items-per-page="searchItemsPerPage"
+        :items="searchItems"
+        :headers="searchHeaders"
+        :items-length="searchTotalItems"
+        :loading="searchLoading"
+        @update:options="loadItemsForSearch"
+      >
+        <template v-slot:item="{ item }">
+          <tr>
+            <td
+              :key="header"
+              v-for="header in searchHeaders"
+              v-html="item[header.key]"
+            ></td>
+          </tr>
+        </template>
+      </v-data-table-server>
+    </v-tabs-window-item>
   </v-tabs-window>
 </template>
 
 <script setup>
-import { ref, onBeforeMount } from "vue";
+import { ref, onBeforeMount, defineModel } from "vue";
 import { datasetsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
+const tab = defineModel("tab");
 
+const annotateHeaders = ref([]);
+const annotateItems = ref([]);
+const annotateLoading = ref(true);
+const annotateTotalItems = ref(0);
+const annotateItemsPerPage = ref(50);
+
+const searchHeaders = ref([]);
+const searchItems = ref([]);
+const searchLoading = ref(true);
+const searchTotalItems = ref(0);
+const searchItemsPerPage = ref(50);
+const searchQuery = defineModel({ default: "" });
 const isSearchUnavailable = ref(true);
 const search = ref("");
 
@@ -181,43 +230,36 @@ const labelHeaders = [
   },
 ]
 
-const tableHeaders = ref([]);
-const serverItems = ref([]);
-const loading = ref(true);
-const totalItems = ref(0);
-const itemsPerPage = ref(50);
+const loadItemsForSearch = ({ query, page, itemsPerPage }) => {
+  searchLoading.value = true;
+  datasetsAPI
+    .searchInDatasetByQuery(route.params.datasetId, query, page, itemsPerPage)
+    .then((res) => {
+      if (res.timeout) {
+        console.log(`Search request ${query} timed out`);
+      }
+      searchTotalItems.value = res.total;
+      searchItems.value = res.rows.map((item) => {
+        const newItem = { num: item.num };
+        for (const key in item.src) {
+          newItem[key] = item.src[key];
+        }
+        return newItem;
+      });
+    })
+    .catch((err) => console.log(err)) // catch properly
+    .finally(() => searchLoading.value = false);
+};
 
-const loadItems = ({ page, itemsPerPage }) => {
-  loading.value = true;
+const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
+  annotateLoading.value = true;
   datasetsAPI
     .getDatasetPage(route.params.datasetId, page, itemsPerPage)
     .then((items) => {
-      serverItems.value = items;
+      annotateItems.value = items;
     })
     .catch((err) => console.log(err)) // catch properly
-    .finally(() => (loading.value = false));
-};
-
-const loadDatasetHeaders = () => {
-  datasetsAPI
-    .getDatasetTableInfo(route.params.datasetId)
-    .then(({ totalRows, headers }) => {
-      totalItems.value = totalRows;
-
-      for (const header of headers) {
-        const headerObj = {
-          title: capitalizeFirstLetter(header),
-          key: header,
-          sortable: false,
-          filterable: false,
-        };
-        if (header === "labels") {
-          headerObj.width = 300;
-        }
-        tableHeaders.value.push(headerObj);
-      }
-    })
-    .catch((err) => console.log(err));
+    .finally(() => annotateLoading.value = false);
 };
 
 const pingDatasetSearchStatus = async () => {
@@ -228,7 +270,6 @@ const pingDatasetSearchStatus = async () => {
       console.log(err);
       return false;
     });
-  console.log(isReady);
   if (isReady) {
     isSearchUnavailable.value = false;
   } else {
@@ -237,7 +278,30 @@ const pingDatasetSearchStatus = async () => {
 };
 pingDatasetSearchStatus();
 
+const loadDatasetHeaders = () => {
+  datasetsAPI
+    .getDatasetTableInfo(route.params.datasetId)
+    .then(({ totalRows, headers }) => {
+      annotateTotalItems.value = totalRows;
+
+      for (const header of headers) {
+        const headerObj = {
+          title: capitalizeFirstLetter(header),
+          key: header,
+          sortable: false,
+          filterable: false,
+        };
+        annotateHeaders.value.push(headerObj);
+        searchHeaders.value.push(headerObj);
+      }
+    })
+    .catch((err) => console.log(err));
+};
 onBeforeMount(() => loadDatasetHeaders());
 </script>
 
-<style></style>
+<style scoped>
+.hlt {
+  background-color: yellow;
+}
+</style>

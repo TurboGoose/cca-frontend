@@ -161,4 +161,56 @@ export const datasetsAPI = {
       isReadyForSearch: true,
     };
   },
+
+  searchInDatasetByQuery: async (datasetId, query, page, size) => {
+    // return api
+    //   .get(`api/datasets/${datasetId}/search`, { query, page, size })
+    //   .then((res) => res.data);
+    return {
+      timeout: false,
+      total: 153,
+      rows: [
+        {
+          num: 8649,
+          src: {
+            username: "admhlt",
+            sent: "2015-01-07T15:56:46.322Z",
+            text: '<mark class="hlt">Hi</mark> Quincy!',
+          },
+        },
+        {
+          num: 9614,
+          src: {
+            username: "xesha",
+            sent: "2015-01-08T02:58:56.104Z",
+            text: '<mark class="hlt">Hi</mark> there',
+          },
+        },
+        {
+          num: 9615,
+          src: {
+            username: "brandenbyers",
+            sent: "2015-01-08T02:59:09.031Z",
+            text: '<mark class="hlt">Hi</mark> @AlecHansen ',
+          },
+        },
+        {
+          num: 9647,
+          src: {
+            username: "brandenbyers",
+            sent: "2015-01-08T03:35:48.429Z",
+            text: '<mark class="hlt">Hi</mark> @ESOComputing ',
+          },
+        },
+        {
+          num: 10606,
+          src: {
+            username: "mwsteb",
+            sent: "2015-01-08T09:48:41.437Z",
+            text: '<mark class="hlt">hi</mark> there, @SoxFace!',
+          },
+        },
+      ],
+    };
+  },
 };
