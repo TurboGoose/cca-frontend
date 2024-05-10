@@ -80,6 +80,7 @@ export const datasetsAPI = {
   },
 
   getDatasetPage: async (datasetId, page, size) => {
+    page--;
     let arr = [
       {
         username: "iyeager2004",
@@ -166,6 +167,8 @@ export const datasetsAPI = {
     // return api
     //   .get(`api/datasets/${datasetId}/search`, { query, page, size })
     //   .then((res) => res.data);
+    page--;
+    console.log({datasetId, query, page, size})
     return {
       timeout: false,
       total: 153,

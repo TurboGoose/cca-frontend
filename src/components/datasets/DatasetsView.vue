@@ -38,7 +38,7 @@
 
         <v-dialog v-model="uploadDialog" max-width="500px">
           <template v-slot:activator="{ props: uploadDialog }">
-            <v-btn class="mb-2" color="primary" dark v-bind="uploadDialog">
+            <v-btn color="primary" dark v-bind="uploadDialog">
               Upload
             </v-btn>
           </template>

@@ -163,13 +163,22 @@
         <v-text-field
           v-model="searchQuery"
           density="compact"
-          label="Search"
+          label="Query"
           prepend-inner-icon="mdi-magnify"
           variant="solo-filled"
           flat
           hide-details
           single-line
+          class="ms-2"
         ></v-text-field>
+        <v-btn
+          @click="
+            loadItemsForSearch({ page: 1, itemsPerPage: searchItemsPerPage })
+          "
+          color="primary"
+          dark
+          >Search</v-btn
+        >
       </v-toolbar>
 
       <v-data-table-server
@@ -212,7 +221,7 @@ const annotateItemsPerPage = ref(50);
 
 const searchHeaders = ref([]);
 const searchItems = ref([]);
-const searchLoading = ref(true);
+const searchLoading = ref(false);
 const searchTotalItems = ref(0);
 const searchItemsPerPage = ref(50);
 const searchQuery = defineModel({ default: "" });
@@ -230,10 +239,18 @@ const labelHeaders = [
   },
 ]
 
-const loadItemsForSearch = ({ query, page, itemsPerPage }) => {
+const loadItemsForSearch = ({ page, itemsPerPage }) => {
+  if (!searchQuery.value) {
+    return;
+  }
   searchLoading.value = true;
   datasetsAPI
-    .searchInDatasetByQuery(route.params.datasetId, query, page, itemsPerPage)
+    .searchInDatasetByQuery(
+      route.params.datasetId,
+      searchQuery.value,
+      page,
+      itemsPerPage
+    )
     .then((res) => {
       if (res.timeout) {
         console.log(`Search request ${query} timed out`);
