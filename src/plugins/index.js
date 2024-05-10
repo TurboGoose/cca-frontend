@@ -9,7 +9,9 @@ import vuetify from "./vuetify";
 import router from "./router";
 import axios from "axios";
 
-export const api = axios.create({ baseURL: process.env.API_URL })
+const baseURL = "http://localhost:8080";
+// const baseUrl = process.env.API_URL;
+export const api = axios.create({ baseURL });
 
 export function registerPlugins(app) {
   app.use(vuetify);

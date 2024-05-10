@@ -280,17 +280,17 @@ const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
 };
 
 const pingDatasetSearchStatus = async () => {
-  const isReady = await datasetsAPI
-    .isDatasetReadyForSearch(route.params.datasetId)
-    .then((res) => res.isReadyForSearch)
-    .catch((err) => {
-      console.log(err);
-      return false;
-    });
-  if (isReady) {
-    isSearchUnavailable.value = false;
-  } else {
-    setTimeout(pingDatasetSearchStatus, 5000);
+  try {
+    const isReady = await datasetsAPI
+      .isDatasetReadyForSearch(route.params.datasetId)
+      .then((res) => res.readyForSearch);
+    if (isReady) {
+      isSearchUnavailable.value = false;
+    } else {
+      setTimeout(pingDatasetSearchStatus, 5000);
+    }
+  } catch (err) {
+    console.log(err);
   }
 };
 pingDatasetSearchStatus();

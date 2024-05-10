@@ -1,7 +1,9 @@
 <template>
   <v-data-table :headers="headers" :items="datasets" :search="search">
     <template v-slot:item.name="{ item }">
-      <router-link :to="`datasets/${item.id}`">{{ item.name }}</router-link>
+      <router-link :to="{ name: 'dataset', params: { datasetId: item.id } }">{{
+        item.name
+      }}</router-link>
     </template>
 
     <template v-slot:item.size="{ item }">
@@ -38,9 +40,7 @@
 
         <v-dialog v-model="uploadDialog" max-width="500px">
           <template v-slot:activator="{ props: uploadDialog }">
-            <v-btn color="primary" dark v-bind="uploadDialog">
-              Upload
-            </v-btn>
+            <v-btn color="primary" dark v-bind="uploadDialog"> Upload </v-btn>
           </template>
           <v-card>
             <v-card-title>
@@ -164,7 +164,8 @@ const headers = [
 
 const loadDatasetList = async () => {
   try {
-    datasets.value = await datasetsAPI.getDatasetList();
+    const actualDatasets = await datasetsAPI.getDatasetList();
+    datasets.value = [...actualDatasets];
   } catch (error) {
     console.log(error);
   }
@@ -174,7 +175,7 @@ onBeforeMount(() => loadDatasetList());
 
 const uploadDataset = async () => {
   datasetsAPI
-    .uploadDataset(uploadedFile)
+    .uploadDataset(uploadedFile.value)
     .then((newDataset) => datasets.value.push(newDataset));
   closeUploadDialog();
 };
@@ -211,10 +212,8 @@ const closeRenameDialog = async () => {
 };
 
 const deleteDataset = async (datasetItem) => {
-  const success = await datasetsAPI.deleteDataset(datasetItem.id);
-  if (success) {
-    const index = datasets.value.indexOf(datasetItem);
-    datasets.value.splice(index, 1);
-  }
+  await datasetsAPI.deleteDataset(datasetItem.id);
+  const index = datasets.value.indexOf(datasetItem);
+  datasets.value.splice(index, 1);
 };
 </script>
