@@ -10,7 +10,6 @@ import router from "./router";
 import axios from "axios";
 
 const baseURL = "http://localhost:8080";
-// const baseUrl = process.env.API_URL;
 export const api = axios.create({ baseURL });
 
 export function registerPlugins(app) {
