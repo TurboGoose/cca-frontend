@@ -10,11 +10,8 @@
 
     <v-navigation-drawer v-model="drawer" location="right" temporary>
       <v-list>
-        <v-list-item link title="My Account"></v-list-item>
-        <v-list-item link title="Datasets">
-          <router-link to="datasets" />
+        <v-list-item link title="Datasets" :to="{name: 'datasets'}">
         </v-list-item>
-        <v-list-item link title="Log out"></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
