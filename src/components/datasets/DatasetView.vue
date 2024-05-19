@@ -134,6 +134,13 @@
             </v-data-table-virtual>
           </v-card-text>
         </v-card>
+
+        <v-divider></v-divider>
+
+        <v-checkbox
+          v-model="rowNumsShown"
+          label="Show row numbers"
+        ></v-checkbox>
       </v-navigation-drawer>
       <v-data-table-server
         v-if="annotateHeaders"
@@ -208,7 +215,7 @@
 </template>
 
 <script setup>
-import { ref, onBeforeMount, defineModel, nextTick } from "vue";
+import { ref, onBeforeMount, defineModel, nextTick, watch } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
@@ -222,6 +229,7 @@ const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
 const annotateItemsPerPage = ref(50);
 const annotatePage = ref(1);
+const rowNumsShown = ref(false);
 
 const searchHeaders = ref([]);
 const searchItems = ref([]);
@@ -340,6 +348,10 @@ const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
   datasetsAPI
     .getDatasetPage(route.params.datasetId, page, itemsPerPage)
     .then((items) => {
+      const offset = (page - 1) * itemsPerPage;
+      for (let i = 0; i < items.length; i++) {
+        items[i]["num"] = offset + i;
+      }
       annotateItems.value = items;
     })
     .catch((err) => console.log(err)) // catch properly
@@ -381,6 +393,19 @@ const loadDatasetHeaders = () => {
     })
     .catch((err) => console.log(err));
 };
+
+watch(rowNumsShown, (shown) => {
+  if (shown) {
+    annotateHeaders.value.unshift({
+      title: "#",
+      key: "num",
+      sortable: false,
+      filterable: false,
+    });
+  } else {
+    annotateHeaders.value.shift();
+  }
+});
 
 const loadDatasetLabels = () => {
   labelsAPI
