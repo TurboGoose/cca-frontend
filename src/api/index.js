@@ -282,6 +282,10 @@ const mockLabelsAPI = {
   updateLabel: async (labelId, newName) => {
     return { id: labelId, name: newName };
   },
+
+  deleteLabel: async (labelId) => {
+    return true;
+  }
 };
 
 export const datasetsAPI = mockDatasetsAPI;

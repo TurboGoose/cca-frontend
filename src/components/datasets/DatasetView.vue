@@ -275,6 +275,17 @@ const renameLabel = async () => {
   closeRenameLabelDialog();
 };
 
+const deleteLabel = async (labelItem) => {
+  const ok = await labelsAPI.deleteLabel(labelItem.id);
+  if (ok) {
+    const index = labels.value.indexOf(labelItem);
+    labels.value.splice(index, 1);
+    loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+  } else {
+    console.log(`Label ${labelItem.id} was not deleted`)
+  }
+}
+
 const closeRenameLabelDialog = async () => {
   renameLabelDialog.value = false;
   await nextTick();

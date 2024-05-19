@@ -212,8 +212,12 @@ const closeRenameDialog = async () => {
 };
 
 const deleteDataset = async (datasetItem) => {
-  await datasetsAPI.deleteDataset(datasetItem.id);
-  const index = datasets.value.indexOf(datasetItem);
-  datasets.value.splice(index, 1);
+  const ok = await datasetsAPI.deleteDataset(datasetItem.id);
+  if (ok) {
+    const index = datasets.value.indexOf(datasetItem);
+    datasets.value.splice(index, 1);
+  } else {
+    console.log(`Dataset ${datasetItem.id} was not deleted`)
+  }
 };
 </script>
