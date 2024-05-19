@@ -1,6 +1,6 @@
 import { api } from "@/plugins";
 
-const realAPI = {
+const realDatasetAPI = {
   getDatasetList: async () => {
     return api.get("/api/datasets").then((res) => res.data);
   },
@@ -63,7 +63,7 @@ const realAPI = {
   },
 };
 
-const mockAPI = {
+const mockDatasetsAPI = {
   getDatasetList: async () => {
     return [
       {
@@ -264,4 +264,25 @@ const mockAPI = {
   },
 };
 
-export const datasetsAPI = mockAPI;
+const mockLabelsAPI = {
+  getDatasetLabels: async () => {
+    return [
+      { id: 1, name: "label1" },
+      { id: 2, name: "label2" },
+      { id: 3, name: "label3" },
+      { id: 1, name: "label1" },
+      { id: 2, name: "label2" },
+      { id: 3, name: "label3" },
+      { id: 1, name: "label1" },
+      { id: 2, name: "label2" },
+      { id: 3, name: "label3" },
+    ];
+  },
+
+  updateLabel: async (labelId, newName) => {
+    return { id: labelId, name: newName };
+  },
+};
+
+export const datasetsAPI = mockDatasetsAPI;
+export const labelsAPI = mockLabelsAPI;

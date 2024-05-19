@@ -16,20 +16,22 @@
 
           <v-card-text>
             <v-data-table-virtual
-              :headers="headers"
-              :items="datasets"
-              :search="search"
+              :headers="labelHeaders"
+              :items="labels"
+              :search="labelSearch"
+              height="200px"
+              fixed-header
               density="compact"
             >
               <template v-slot:item.actions="{ item }">
                 <v-icon
                   class="me-2"
                   size="small"
-                  @click="openRenameDialog(item)"
+                  @click="openRenameLabelDialog(item)"
                 >
                   mdi-pencil
                 </v-icon>
-                <v-icon class="me-4" size="small" @click="deleteDataset(item)">
+                <v-icon class="me-4" size="small" @click="deleteLabel(item)">
                   mdi-delete
                 </v-icon>
               </template>
@@ -91,15 +93,15 @@
                     </v-card>
                   </v-dialog>
 
-                  <v-dialog v-model="renameDialog" max-width="500px">
+                  <v-dialog v-model="renameLabelDialog" max-width="500px">
                     <v-card>
                       <v-card-title>
-                        <span class="text-h5">Rename dataset</span>
+                        <span class="text-h5">Rename label</span>
                       </v-card-title>
 
                       <v-card-text>
                         <v-text-field
-                          v-model="newName"
+                          v-model="newLabelName"
                           label="New dataset name"
                         ></v-text-field>
                       </v-card-text>
@@ -109,14 +111,14 @@
                         <v-btn
                           color="blue-darken-1"
                           variant="text"
-                          @click="closeRenameDialog"
+                          @click="closeRenameLabelDialog"
                         >
                           Cancel
                         </v-btn>
                         <v-btn
                           color="blue-darken-1"
                           variant="text"
-                          @click="renameDataset"
+                          @click="renameLabel"
                         >
                           Save
                         </v-btn>
@@ -188,6 +190,7 @@
         :headers="searchHeaders"
         :items-length="searchTotalItems"
         :loading="searchLoading"
+        :page="annotatePage"
         @update:options="loadItemsForSearch"
       >
         <template v-slot:item="{ item }">
@@ -205,8 +208,8 @@
 </template>
 
 <script setup>
-import { ref, onBeforeMount, defineModel } from "vue";
-import { datasetsAPI } from "@/api";
+import { ref, onBeforeMount, defineModel, nextTick } from "vue";
+import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
@@ -218,6 +221,7 @@ const annotateItems = ref([]);
 const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
 const annotateItemsPerPage = ref(50);
+const annotatePage = ref(1);
 
 const searchHeaders = ref([]);
 const searchItems = ref([]);
@@ -229,15 +233,53 @@ const isSearchUnavailable = ref(true);
 const search = ref("");
 
 const currentLabel = ref("label");
+const labels = ref([]);
+const labelSearch = ref("");
+const renameLabelDialog = ref(false);
+const newLabelName = ref("");
+const renamedLabel = ref();
 const labelHeaders = [
-{
+  {
+    title: "name",
+    key: "name",
+  },
+  {
     title: "",
     key: "actions",
     align: "end",
     filterable: false,
     sortable: false,
   },
-]
+];
+
+const openRenameLabelDialog = (labelItem) => {
+  newLabelName.value = labelItem.name;
+  renamedLabel.value = labelItem;
+  renameLabelDialog.value = true;
+};
+
+const renameLabel = async () => {
+  if (renamedLabel.value.name !== newLabelName.value) {
+    try {
+      const renamed = await labelsAPI.updateLabel(
+        renamedLabel.value.id,
+        newLabelName.value
+      );
+      renamedLabel.value.name = renamed.name;
+      loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  newLabelName.value = "";
+  closeRenameLabelDialog();
+};
+
+const closeRenameLabelDialog = async () => {
+  renameLabelDialog.value = false;
+  await nextTick();
+  newLabelName.value = "";
+};
 
 const loadItemsForSearch = ({ page, itemsPerPage }) => {
   if (!searchQuery.value) {
@@ -265,7 +307,7 @@ const loadItemsForSearch = ({ page, itemsPerPage }) => {
       });
     })
     .catch((err) => console.log(err)) // catch properly
-    .finally(() => searchLoading.value = false);
+    .finally(() => (searchLoading.value = false));
 };
 
 const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
@@ -276,7 +318,7 @@ const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
       annotateItems.value = items;
     })
     .catch((err) => console.log(err)) // catch properly
-    .finally(() => annotateLoading.value = false);
+    .finally(() => (annotateLoading.value = false));
 };
 
 const pingDatasetSearchStatus = async () => {
@@ -314,7 +356,18 @@ const loadDatasetHeaders = () => {
     })
     .catch((err) => console.log(err));
 };
-onBeforeMount(() => loadDatasetHeaders());
+
+const loadDatasetLabels = () => {
+  labelsAPI
+    .getDatasetLabels(route.params.datasetId)
+    .then((labelArr) => (labels.value = labelArr))
+    .catch((err) => console.log(err));
+};
+
+onBeforeMount(() => {
+  loadDatasetHeaders();
+  loadDatasetLabels();
+});
 </script>
 
 <style scoped>
