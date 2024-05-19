@@ -11,17 +11,24 @@
           <v-card-title class="text-h4"> Labels </v-card-title>
 
           <v-card-subtitle>
-            Current: <v-chip>{{ currentLabel }}</v-chip>
+            Current: 
+            <v-chip v-if="currentLabel">{{ currentLabel.name }}</v-chip>
+            <span v-else>No label selected</span>
           </v-card-subtitle>
 
           <v-card-text>
             <v-data-table-virtual
+              v-model="selectedLabels"
               :headers="labelHeaders"
               :items="labels"
               :search="labelSearch"
               height="200px"
-              fixed-header
               density="compact"
+              fixed-header
+              item-value="id"
+              select-strategy="single"
+              return-object
+              show-select
             >
               <template v-slot:item.actions="{ item }">
                 <v-icon
@@ -215,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, onBeforeMount, defineModel, nextTick, watch } from "vue";
+import { ref, onBeforeMount, defineModel, nextTick, watch, computed } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
@@ -240,7 +247,16 @@ const searchQuery = defineModel({ default: "" });
 const isSearchUnavailable = ref(true);
 const search = ref("");
 
-const currentLabel = ref("label");
+const currentLabel = computed(() => {
+  if (selectedLabels.value) {
+    return selectedLabels.value[0];
+  }
+  if (labels.value) {
+    return labels.value[0];
+  }
+  return null;
+});
+const selectedLabels = ref();
 const labels = ref([]);
 const labelSearch = ref("");
 const renameLabelDialog = ref(false);

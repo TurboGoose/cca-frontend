@@ -272,12 +272,12 @@ const mockLabelsAPI = {
       { id: 1, name: "label1" },
       { id: 2, name: "label2" },
       { id: 3, name: "label3" },
-      { id: 1, name: "label1" },
-      { id: 2, name: "label2" },
-      { id: 3, name: "label3" },
-      { id: 1, name: "label1" },
-      { id: 2, name: "label2" },
-      { id: 3, name: "label3" },
+      { id: 4, name: "label4" },
+      { id: 5, name: "label5" },
+      { id: 6, name: "label6" },
+      { id: 7, name: "label7" },
+      { id: 8, name: "label8" },
+      { id: 9, name: "label9" },
     ];
   },
 
