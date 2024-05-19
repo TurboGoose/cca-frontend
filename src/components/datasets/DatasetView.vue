@@ -47,7 +47,7 @@
                 <v-toolbar flat>
                   <v-spacer></v-spacer>
                   <v-text-field
-                    v-model="search"
+                    v-model="labelSearch"
                     density="compact"
                     label="Search"
                     prepend-inner-icon="mdi-magnify"
@@ -136,7 +136,7 @@
               </template>
 
               <template v-slot:no-data>
-                <h3>No labels</h3>
+                <span>No labels</span>
               </template>
             </v-data-table-virtual>
           </v-card-text>
