@@ -205,7 +205,7 @@ const mockDatasetsAPI = {
 
   searchInDatasetByQuery: async (datasetId, query, page, size) => {
     page--;
-    let arr = {
+    let obj = {
       timeout: false,
       total: 153,
       rows: [
@@ -253,6 +253,7 @@ const mockDatasetsAPI = {
     };
 
     const total = (page + 1) * size;
+    let arr = obj.rows;
     let count = arr.size;
     while (count < total) {
       arr = arr.concat(arr);
@@ -260,7 +261,8 @@ const mockDatasetsAPI = {
     }
 
     const offset = page * size;
-    return arr.slice(offset, offset + size);
+    obj.rows = arr.slice(offset, offset + size);
+    return obj;
   },
 };
 
