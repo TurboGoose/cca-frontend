@@ -78,14 +78,14 @@
                         <v-btn
                           color="blue-darken-1"
                           variant="text"
-                          @click="closeUploadDialog"
+                          @click="closeAddLabelDialog"
                         >
                           Cancel
                         </v-btn>
                         <v-btn
                           color="blue-darken-1"
                           variant="text"
-                          @click="uploadDataset"
+                          @click="addLabel"
                         >
                           Add
                         </v-btn>
@@ -238,6 +238,7 @@ const labelSearch = ref("");
 const renameLabelDialog = ref(false);
 const newLabelName = ref("");
 const renamedLabel = ref();
+const addLabelDialog = ref(false);
 const labelHeaders = [
   {
     title: "name",
@@ -251,6 +252,19 @@ const labelHeaders = [
     sortable: false,
   },
 ];
+
+const addLabel = () => {
+  labelsAPI
+    .saveLabel(newLabelName.value)
+    .then((newLabel) => labels.value.unshift(newLabel));
+  closeAddLabelDialog();
+};
+
+const closeAddLabelDialog = async () => {
+  addLabelDialog.value = false;
+  await nextTick();
+  newLabelName.value = "";
+};
 
 const openRenameLabelDialog = (labelItem) => {
   newLabelName.value = labelItem.name;
@@ -275,6 +289,12 @@ const renameLabel = async () => {
   closeRenameLabelDialog();
 };
 
+const closeRenameLabelDialog = async () => {
+  renameLabelDialog.value = false;
+  await nextTick();
+  newLabelName.value = "";
+};
+
 const deleteLabel = async (labelItem) => {
   const ok = await labelsAPI.deleteLabel(labelItem.id);
   if (ok) {
@@ -282,14 +302,8 @@ const deleteLabel = async (labelItem) => {
     labels.value.splice(index, 1);
     loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
   } else {
-    console.log(`Label ${labelItem.id} was not deleted`)
+    console.log(`Label ${labelItem.id} was not deleted`);
   }
-}
-
-const closeRenameLabelDialog = async () => {
-  renameLabelDialog.value = false;
-  await nextTick();
-  newLabelName.value = "";
 };
 
 const loadItemsForSearch = ({ page, itemsPerPage }) => {
