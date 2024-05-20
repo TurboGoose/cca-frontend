@@ -8,15 +8,28 @@
     <v-tabs-window-item value="annotate">
       <v-navigation-drawer location="right" width="350" permanent>
         <v-card class="ma-3" flat>
-          <v-card-title class="text-h4"> Labels </v-card-title>
-
-          <v-card-subtitle>
-            Current: 
-            <v-chip v-if="currentLabel">{{ currentLabel.name }}</v-chip>
-            <span v-else>No label selected</span>
-          </v-card-subtitle>
-
+          <v-card-title class="text-h5"> Labels </v-card-title>
           <v-card-text>
+            <v-sheet class="mb-3">
+              Current label:
+              <v-sheet v-if="currentLabel" class="d-flex justify-space-between mt-3">
+                <v-chip label variant="outlined">{{
+                  currentLabel.name
+                }}</v-chip>
+
+                <v-btn
+                  class="ms-3"
+                  color="primary"
+                  variant="text"
+
+                  @click="annotateRows"
+                  @keyup.enter="annotateRows"
+                >
+                  Annotate
+                </v-btn>
+              </v-sheet>
+              <span v-else>Nothing selected</span>
+            </v-sheet>
             <v-data-table-virtual
               v-model="selectedLabels"
               :headers="labelHeaders"
@@ -45,8 +58,8 @@
 
               <template v-slot:top>
                 <v-toolbar flat>
-                  <v-spacer></v-spacer>
                   <v-text-field
+                    class="ms-2"
                     v-model="labelSearch"
                     density="compact"
                     label="Search"
@@ -59,12 +72,7 @@
 
                   <v-dialog v-model="addLabelDialog" max-width="500px">
                     <template v-slot:activator="{ props: addLabelDialog }">
-                      <v-btn
-                        class="mb-2"
-                        color="primary"
-                        dark
-                        v-bind="addLabelDialog"
-                      >
+                      <v-btn color="primary" dark v-bind="addLabelDialog">
                         Add
                       </v-btn>
                     </template>
@@ -151,11 +159,15 @@
       </v-navigation-drawer>
       <v-data-table-server
         v-if="annotateHeaders"
+        v-model="selectedRows"
+        item-value="num"
+        select-strategy="page"
         v-model:items-per-page="annotateItemsPerPage"
         :items="annotateItems"
         :headers="annotateHeaders"
         :items-length="annotateTotalItems"
         :loading="annotateLoading"
+        show-select
         @update:options="loadItemsForAnnotate"
       >
         <template v-slot:item.labels="{ item }">
@@ -165,9 +177,9 @@
               closable
               variant="outlined"
               v-for="label in item.labels"
-              :key="label"
+              :key="label.id"
             >
-              {{ label }}
+              {{ label.name }}
             </v-chip>
           </v-chip-group>
         </template>
@@ -222,7 +234,14 @@
 </template>
 
 <script setup>
-import { ref, onBeforeMount, defineModel, nextTick, watch, computed } from "vue";
+import {
+  ref,
+  onBeforeMount,
+  defineModel,
+  nextTick,
+  watch,
+  computed,
+} from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
@@ -236,6 +255,7 @@ const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
 const annotateItemsPerPage = ref(50);
 const annotatePage = ref(1);
+const selectedRows = ref([]);
 const rowNumsShown = ref(false);
 
 const searchHeaders = ref([]);
@@ -245,14 +265,10 @@ const searchTotalItems = ref(0);
 const searchItemsPerPage = ref(50);
 const searchQuery = defineModel({ default: "" });
 const isSearchUnavailable = ref(true);
-const search = ref("");
 
 const currentLabel = computed(() => {
   if (selectedLabels.value) {
     return selectedLabels.value[0];
-  }
-  if (labels.value) {
-    return labels.value[0];
   }
   return null;
 });
@@ -265,7 +281,7 @@ const renamedLabel = ref();
 const addLabelDialog = ref(false);
 const labelHeaders = [
   {
-    title: "name",
+    title: "Name",
     key: "name",
   },
   {
@@ -276,6 +292,35 @@ const labelHeaders = [
     sortable: false,
   },
 ];
+
+const annotateRows = async () => {
+  if (selectedRows.value && currentLabel.value) {
+    const ok = await datasetsAPI.annotateRows(
+      selectedRows.value,
+      currentLabel.value.id
+    );
+    if (ok) {
+      selectedRows.value.sort();
+
+      let itemIndex = 0;
+      for (const rowNum of selectedRows.value) {
+        while (
+          itemIndex < annotateItems.value.length &&
+          annotateItems.value[itemIndex].num != rowNum
+        ) {
+          itemIndex++;
+        }
+        const itemLabels = annotateItems.value[itemIndex].labels;
+        if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
+          itemLabels.push(currentLabel.value);
+        }
+      }
+    } else {
+      console.log("Failed to annotate");
+    }
+  }
+  selectedRows.value.length = 0;
+};
 
 const addLabel = () => {
   labelsAPI

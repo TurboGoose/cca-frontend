@@ -61,6 +61,10 @@ const realDatasetAPI = {
       })
       .then((res) => res.data);
   },
+
+  getDatasetLabels: async (datasetId) => {
+
+  },
 };
 
 const mockDatasetsAPI = {
@@ -128,7 +132,10 @@ const mockDatasetsAPI = {
         username: "iyeager2004",
         sent: "2015-01-08T05:50:02.546Z",
         text: "I'll be visiting a hackerspace on Tuesday in SF to check it out. This is their FAQ... https://www.noisebridge.net/wiki/Hours",
-        labels: ["label1", "label2"],
+        labels: [
+          { id: 1, name: "label1" },
+          { id: 2, name: "label2" },
+        ],
       },
       {
         username: "piecedigital",
@@ -140,13 +147,13 @@ const mockDatasetsAPI = {
         username: "farobek",
         sent: "2015-01-01T00:49:45.245Z",
         text: ";)",
-        labels: ["label1"],
+        labels: [{ id: 1, name: "label1" }],
       },
       {
         username: "Rybar",
         sent: "2015-01-08T05:50:12.246Z",
         text: 'the "blackbody" color table preset still exists in PS today',
-        labels: ["label3"],
+        labels: [{ id: 3, name: "label3" }],
       },
       {
         username: "jsonify",
@@ -264,10 +271,8 @@ const mockDatasetsAPI = {
     obj.rows = arr.slice(offset, offset + size);
     return obj;
   },
-};
 
-const mockLabelsAPI = {
-  getDatasetLabels: async () => {
+  getDatasetLabels: async (datasetId) => {
     return [
       { id: 1, name: "label1" },
       { id: 2, name: "label2" },
@@ -281,6 +286,12 @@ const mockLabelsAPI = {
     ];
   },
 
+  annotateRows: async (rows, label) => {
+    return true; // ok or not
+  },
+};
+
+const mockLabelsAPI = {
   updateLabel: async (labelId, newName) => {
     return { id: labelId, name: newName };
   },
@@ -294,5 +305,18 @@ const mockLabelsAPI = {
   },
 };
 
-export const datasetsAPI = mockDatasetsAPI;
+const realLabelsAPI = {
+  updateLabel: async (labelId, newName) => {
+  },
+
+  deleteLabel: async (labelId) => {
+    return true;
+  },
+
+  saveLabel: async (newName) => {
+    return { id: 33, name: newName };
+  },
+};
+
+export const datasetsAPI = realDatasetAPI;
 export const labelsAPI = mockLabelsAPI;
