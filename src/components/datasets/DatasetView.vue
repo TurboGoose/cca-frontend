@@ -12,25 +12,36 @@
           <v-card-text>
             <v-sheet class="mb-3">
               Current label:
-              <v-sheet
+              <v-chip
                 v-if="currentLabel"
-                class="d-flex justify-space-between mt-3"
+                label
+                density="compact"
+                variant="outlined"
+                class="ms-1"
+                >{{ currentLabel.name }}</v-chip
               >
-                <v-chip label variant="outlined">{{ // TODO: add to diff with added: false on click 
-                  currentLabel.name
-                }}</v-chip>
+              <v-chip
+                v-else
+                label
+                variant="outlined"
+                color="red"
+                density="compact"
+                class="ms-1"
+              >
+                Nothing selected
+              </v-chip>
 
-                <v-btn
-                  class="ms-3"
-                  color="primary"
-                  variant="text"
-                  @click="annotateRows"
-                  @keyup.enter="annotateRows"
-                >
-                  Annotate
-                </v-btn>
-              </v-sheet>
-              <span v-else>Nothing selected</span>
+              <v-btn
+                class="d-block mt-2 pa-0"
+                :disabled="!(annotationDiff.length || selectedRows.length)"
+                color="primary"
+                variant="text"
+                density="compact"
+                @click="annotateRows"
+                @keyup.enter="annotateRows"
+              >
+                Annotate
+              </v-btn>
             </v-sheet>
             <v-data-table-virtual
               v-model="selectedLabels"
@@ -180,6 +191,7 @@
               variant="outlined"
               v-for="label in item.labels"
               :key="label.id"
+              @click:close="addAnnotation(item.num, label.id, false)"
             >
               {{ label.name }}
             </v-chip>
@@ -257,8 +269,10 @@ const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
 const annotateItemsPerPage = ref(50);
 const annotatePage = ref(1);
-const selectedRows = ref([]);
 const rowNumsShown = ref(false);
+
+const selectedRows = ref([]);
+const annotationDiff = ref([]);
 
 const searchHeaders = ref([]);
 const searchItems = ref([]);
@@ -295,12 +309,28 @@ const labelHeaders = [
   },
 ];
 
+const addAnnotation = (rowNum, labelId, added) => {
+  const reversedAnnotationIndx = annotationDiff.value.findIndex(
+    (annot) =>
+      annot.rowNum === rowNum &&
+      annot.labelId === labelId &&
+      annot.added !== added
+  );
+  if (reversedAnnotationIndx === -1) {
+    annotationDiff.value.push({ rowNum, labelId, added: added });
+  } else {
+    annotationDiff.value.splice(reversedAnnotationIndx, 1);
+  }
+};
+
 const annotateRows = async () => {
   if (selectedRows.value && currentLabel.value) {
+    for (const rowNum of selectedRows.value) {
+      addAnnotation(rowNum, currentLabel.value.id, true);
+    }
     const ok = await datasetsAPI.annotateRows(
-
-      selectedRows.value,
-      currentLabel.value.id
+      route.params.datasetId,
+      annotationDiff.value
     );
     if (ok) {
       selectedRows.value.sort();
@@ -323,6 +353,7 @@ const annotateRows = async () => {
     }
   }
   selectedRows.value.length = 0;
+  annotationDiff.value.length = 0;
 };
 
 const addLabel = () => {
