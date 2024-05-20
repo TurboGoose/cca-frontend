@@ -33,7 +33,12 @@
 
               <v-btn
                 class="d-block mt-2 pa-0"
-                :disabled="!(annotationDiff.length || selectedRows.length)"
+                :disabled="
+                  !(
+                    annotationDiff.length ||
+                    (selectedRows.length && currentLabel)
+                  )
+                "
                 color="primary"
                 variant="text"
                 density="compact"
@@ -325,16 +330,27 @@ const addAnnotation = (rowNum, labelId, added) => {
 
 const annotateRows = async () => {
   if (selectedRows.value && currentLabel.value) {
+    selectedRows.value.sort();
+    let itemIndex = 0;
     for (const rowNum of selectedRows.value) {
-      addAnnotation(rowNum, currentLabel.value.id, true);
+      while (
+        itemIndex < annotateItems.value.length &&
+        annotateItems.value[itemIndex].num != rowNum
+      ) {
+        itemIndex++;
+      }
+      const itemLabels = annotateItems.value[itemIndex].labels;
+      if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
+        addAnnotation(rowNum, currentLabel.value.id, true);
+      }
     }
+  }
+  if (annotationDiff.value) {
     const ok = await datasetsAPI.annotateRows(
       route.params.datasetId,
       annotationDiff.value
     );
     if (ok) {
-      selectedRows.value.sort();
-
       let itemIndex = 0;
       for (const rowNum of selectedRows.value) {
         while (
@@ -448,7 +464,7 @@ const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
   datasetsAPI
     .getDatasetPage(route.params.datasetId, page, itemsPerPage)
     .then((items) => {
-      const offset = (page - 1) * itemsPerPage;
+      const offset = (page - 1) * itemsPerPage + 1;
       for (let i = 0; i < items.length; i++) {
         items[i]["num"] = offset + i;
       }
