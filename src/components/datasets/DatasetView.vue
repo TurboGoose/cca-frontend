@@ -12,8 +12,11 @@
           <v-card-text>
             <v-sheet class="mb-3">
               Current label:
-              <v-sheet v-if="currentLabel" class="d-flex justify-space-between mt-3">
-                <v-chip label variant="outlined">{{
+              <v-sheet
+                v-if="currentLabel"
+                class="d-flex justify-space-between mt-3"
+              >
+                <v-chip label variant="outlined">{{ // TODO: add to diff with added: false on click 
                   currentLabel.name
                 }}</v-chip>
 
@@ -21,7 +24,6 @@
                   class="ms-3"
                   color="primary"
                   variant="text"
-
                   @click="annotateRows"
                   @keyup.enter="annotateRows"
                 >
@@ -296,6 +298,7 @@ const labelHeaders = [
 const annotateRows = async () => {
   if (selectedRows.value && currentLabel.value) {
     const ok = await datasetsAPI.annotateRows(
+
       selectedRows.value,
       currentLabel.value.id
     );
@@ -324,7 +327,11 @@ const annotateRows = async () => {
 
 const addLabel = () => {
   labelsAPI
-    .saveLabel(newLabelName.value)
+    .saveLabel(
+      route.params.datasetId,
+      route.params.datasetId,
+      newLabelName.value
+    )
     .then((newLabel) => labels.value.unshift(newLabel));
   closeAddLabelDialog();
 };
@@ -345,6 +352,7 @@ const renameLabel = async () => {
   if (renamedLabel.value.name !== newLabelName.value) {
     try {
       const renamed = await labelsAPI.updateLabel(
+        route.params.datasetId,
         renamedLabel.value.id,
         newLabelName.value
       );
@@ -365,7 +373,7 @@ const closeRenameLabelDialog = async () => {
 };
 
 const deleteLabel = async (labelItem) => {
-  const ok = await labelsAPI.deleteLabel(labelItem.id);
+  const ok = await labelsAPI.deleteLabel(route.params.datasetId, labelItem.id);
   if (ok) {
     const index = labels.value.indexOf(labelItem);
     labels.value.splice(index, 1);
@@ -469,7 +477,7 @@ watch(rowNumsShown, (shown) => {
 });
 
 const loadDatasetLabels = () => {
-  labelsAPI
+  datasetsAPI
     .getDatasetLabels(route.params.datasetId)
     .then((labelArr) => (labels.value = labelArr))
     .catch((err) => console.log(err));

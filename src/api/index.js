@@ -63,7 +63,13 @@ const realDatasetAPI = {
   },
 
   getDatasetLabels: async (datasetId) => {
+    return api.get(`api/datasets/${datasetId}/labels`).then((res) => res.data);
+  },
 
+  annotateRows: async (datasetId, annotationsDiff) => {
+    return api
+      .put(`api/datasets/${datasetId}`, annotationsDiff)
+      .then((res) => res.status === 200);
   },
 };
 
@@ -286,37 +292,49 @@ const mockDatasetsAPI = {
     ];
   },
 
-  annotateRows: async (rows, label) => {
+  annotateRows: async (datasetId, annotationsDiff) => {
+    
     return true; // ok or not
   },
 };
 
 const mockLabelsAPI = {
-  updateLabel: async (labelId, newName) => {
+  saveLabel: async (datasetId, newName) => {
+    return { id: 33, name: newName };
+  },
+
+  updateLabel: async (datasetId, labelId, newName) => {
     return { id: labelId, name: newName };
   },
 
-  deleteLabel: async (labelId) => {
+  deleteLabel: async (datasetId, labelId) => {
     return true;
-  },
-
-  saveLabel: async (newName) => {
-    return { id: 33, name: newName };
   },
 };
 
 const realLabelsAPI = {
-  updateLabel: async (labelId, newName) => {
+  saveLabel: async (datasetId, newName) => {
+    return api
+      .post(`/api/datasets/${datasetId}/labels`, null, {
+        params: { name: newName },
+      })
+      .then((res) => res.data);
   },
 
-  deleteLabel: async (labelId) => {
-    return true;
+  updateLabel: async (datasetId, labelId, newName) => {
+    return api
+      .patch(`/api/datasets/${datasetId}/labels/${labelId}`, null, {
+        params: { name: newName },
+      })
+      .then((res) => res.data);
   },
 
-  saveLabel: async (newName) => {
-    return { id: 33, name: newName };
+  deleteLabel: async (datasetId, labelId) => {
+    return api
+      .delete(`/api/datasets/${datasetId}/labels/${labelId}`)
+      .then((res) => res.status === 200);
   },
 };
 
 export const datasetsAPI = realDatasetAPI;
-export const labelsAPI = mockLabelsAPI;
+export const labelsAPI = realLabelsAPI;
