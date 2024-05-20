@@ -21,6 +21,9 @@
       <v-icon class="me-4" size="small" @click="deleteDataset(item)">
         mdi-delete
       </v-icon>
+      <v-icon class="me-4" size="small" @click="downloadDataset(item)">
+        mdi-download
+      </v-icon>
     </template>
 
     <template v-slot:top>
@@ -120,6 +123,7 @@
 import { onBeforeMount, nextTick, ref } from "vue";
 import { datasetsAPI } from "@/api";
 import { convertBytes, formatTimestamp } from "@/util";
+import { saveAs } from "file-saver";
 
 const datasets = ref([]);
 
@@ -217,7 +221,15 @@ const deleteDataset = async (datasetItem) => {
     const index = datasets.value.indexOf(datasetItem);
     datasets.value.splice(index, 1);
   } else {
-    console.log(`Dataset ${datasetItem.id} was not deleted`)
+    console.log(`Dataset ${datasetItem.id} was not deleted`);
   }
 };
+
+const downloadDataset = (datasetItem) => {
+  datasetsAPI.downloadDataset(datasetItem.id)
+  .then(res => {
+    const filename = datasetItem.name + ".csv";
+    saveAs(new Blob([res.data], { type: 'application/octet-stream' }), filename, { autoBOM: false });
+  })
+}
 </script>

@@ -71,6 +71,12 @@ const realDatasetAPI = {
       .put(`api/datasets/${datasetId}`, annotationsDiff)
       .then((res) => res.status === 200);
   },
+
+  downloadDataset: async (datasetId) => {
+    return api.get(`api/datasets/${datasetId}/download`, {
+      params: { ext: "csv" },
+    });
+  },
 };
 
 const mockDatasetsAPI = {
@@ -293,7 +299,6 @@ const mockDatasetsAPI = {
   },
 
   annotateRows: async (datasetId, annotationsDiff) => {
-    
     return true; // ok or not
   },
 };
