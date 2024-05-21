@@ -10,7 +10,16 @@
 
     <v-navigation-drawer v-model="drawer" location="right" temporary>
       <v-list>
-        <v-list-item link title="Datasets" :to="{name: 'datasets'}">
+        <v-list-item>
+          <v-switch
+            v-model="darkTheme"
+            color="primary"
+            label="Dark theme"
+            hide-details
+            class="ms-2"
+          ></v-switch>
+        </v-list-item>
+        <v-list-item link title="Datasets" :to="{ name: 'datasets' }">
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -22,5 +31,15 @@
 </template>
 
 <script setup>
+import { ref, watch } from "vue";
+import { useTheme } from "vuetify";
+
+const theme = useTheme();
 const drawer = defineModel({ default: false });
+
+const darkTheme = ref(false);
+
+watch(darkTheme, (newValue) => {
+  theme.global.name.value = newValue ? "dark" : "light";
+});
 </script>
