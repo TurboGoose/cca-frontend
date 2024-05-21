@@ -138,12 +138,11 @@ const mockDatasetsAPI = {
     return {
       totalRows: 11265,
       headers: {
-        excluded: [],
+        excluded: [{ name: "text", width: 0 }],
         included: [
           { name: "labels", width: 0 },
           { name: "username", width: 0 },
           { name: "sent", width: 0 },
-          { name: "text", width: 0 },
         ],
       },
     };

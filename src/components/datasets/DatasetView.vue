@@ -202,64 +202,52 @@ const annotateItems = ref([]);
               <v-sheet>
                 <p>Included</p>
                 <v-data-table-virtual
-                  v-model="selectedLabels"
-                  :headers="labelHeaders"
-                  :items="labels"
-                  :search="labelSearch"
+                  :headers="columnHeaders"
+                  :items="datasetHeaders.included"
                   height="200px"
                   density="compact"
                   fixed-header
-                  item-value="id"
-                  select-strategy="single"
-                  return-object
-                  show-select
                 >
                   <template v-slot:item.actions="{ item }">
                     <v-icon
                       class="me-2"
                       size="small"
-                      @click="openRenameLabelDialog(item)"
+                      @click="moveColumn(item, 'left')"
                     >
-                      mdi-pencil
+                      mdi-arrow-up
                     </v-icon>
                     <v-icon
                       class="me-4"
                       size="small"
-                      @click="deleteLabel(item)"
+                      @click="moveColumn(item, 'right')"
                     >
-                      mdi-delete
+                      mdi-arrow-down
+                    </v-icon>
+                    <v-icon
+                      class="me-4"
+                      size="small"
+                      @click="excludeColumn(item)"
+                    >
+                      mdi-close
                     </v-icon>
                   </template>
                 </v-data-table-virtual>
 
                 <p>Excluded</p>
                 <v-data-table-virtual
-                  v-model="selectedLabels"
-                  :headers="labelHeaders"
-                  :items="labels"
-                  :search="labelSearch"
+                  :headers="columnHeaders"
+                  :items="datasetHeaders.excluded"
                   height="200px"
                   density="compact"
                   fixed-header
-                  item-value="id"
-                  select-strategy="single"
-                  return-object
-                  show-select
                 >
                   <template v-slot:item.actions="{ item }">
                     <v-icon
-                      class="me-2"
-                      size="small"
-                      @click="openRenameLabelDialog(item)"
-                    >
-                      mdi-pencil
-                    </v-icon>
-                    <v-icon
                       class="me-4"
                       size="small"
-                      @click="deleteLabel(item)"
+                      @click="includeColumn(item)"
                     >
-                      mdi-delete
+                      mdi-plus
                     </v-icon>
                   </template>
                 </v-data-table-virtual>
@@ -427,6 +415,66 @@ const labelHeaders = [
     sortable: false,
   },
 ];
+
+const columnHeaders = [
+  {
+    title: "Name",
+    key: "name",
+    sortable: false,
+    filterable: false,
+  },
+  {
+    title: "",
+    key: "actions",
+    align: "end",
+    filterable: false,
+    sortable: false,
+  },
+];
+
+const moveColumn = (columnItem, direction) => {
+  const included = datasetHeaders.value.included;
+  const index = included.findIndex((elem) => elem === columnItem);
+  if (index === -1) {
+    console.log(`Cannot find header ${columnItem} in included header list`);
+    return;
+  }
+  if (direction === "left" && index > 0) {
+    let temp = included[index - 1];
+    included[index - 1] = included[index];
+    included[index] = temp;
+  } else if (direction === "right" && index < included.length - 1) {
+    let temp = included[index + 1];
+    included[index + 1] = included[index];
+    included[index] = temp;
+  }
+  return included;
+};
+
+const includeColumn = (columnItem) => {
+  changeColumnVisibility(
+    columnItem,
+    datasetHeaders.value.excluded,
+    datasetHeaders.value.included
+  );
+};
+
+const excludeColumn = (columnItem) => {
+  changeColumnVisibility(
+    columnItem,
+    datasetHeaders.value.included,
+    datasetHeaders.value.excluded
+  );
+};
+
+const changeColumnVisibility = (columnItem, from, to) => {
+  const index = from.findIndex((elem) => elem === columnItem);
+  if (index === -1) {
+    return;
+  }
+  from.splice(index, 1);
+  to.push(columnItem);
+};
 
 const addAnnotation = (rowNum, labelId, added) => {
   const reversedAnnotationIndx = annotationDiff.value.findIndex(
