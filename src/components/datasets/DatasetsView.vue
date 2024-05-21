@@ -21,9 +21,27 @@
       <v-icon class="me-4" size="small" @click="deleteDataset(item)">
         mdi-delete
       </v-icon>
-      <v-icon class="me-4" size="small" @click="downloadDataset(item)">
-        mdi-download
-      </v-icon>
+
+      <v-menu open-on-hover>
+        <template v-slot:activator="{ props }">
+          <v-icon v-bind="props" class="me-4" size="small">
+            mdi-download
+          </v-icon>
+        </template>
+
+        <v-list>
+          <v-list-item>
+            <v-list-item-title @click="downloadDataset(item, 'csv')"
+              >CSV</v-list-item-title
+            >
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-title @click="downloadDataset(item, 'json')"
+              >JSON</v-list-item-title
+            >
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </template>
 
     <template v-slot:top>
@@ -123,7 +141,6 @@
 import { onBeforeMount, nextTick, ref } from "vue";
 import { datasetsAPI } from "@/api";
 import { convertBytes, formatTimestamp } from "@/util";
-import { saveAs } from "file-saver";
 
 const datasets = ref([]);
 
@@ -225,11 +242,9 @@ const deleteDataset = async (datasetItem) => {
   }
 };
 
-const downloadDataset = (datasetItem) => {
-  datasetsAPI.downloadDataset(datasetItem.id)
-  .then(res => {
-    const filename = datasetItem.name + ".csv";
-    saveAs(new Blob([res.data], { type: 'application/octet-stream' }), filename, { autoBOM: false });
-  })
-}
+const downloadDataset = (datasetItem, ext) => {
+  datasetsAPI
+  .downloadDataset(datasetItem.id, ext)
+  .then(() => console.log(`Dataset ${datasetItem.name}.${ext} downloaded`));
+};
 </script>

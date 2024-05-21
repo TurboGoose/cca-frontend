@@ -72,10 +72,14 @@ const realDatasetAPI = {
       .then((res) => res.status === 200);
   },
 
-  downloadDataset: async (datasetId) => {
-    return api.get(`api/datasets/${datasetId}/download`, {
-      params: { ext: "csv" },
+  downloadDataset: async (datasetId, ext) => {
+    const downloadUrl = api.getUri({
+      url: `api/datasets/${datasetId}/download`,
+      params: { ext },
     });
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.dispatchEvent(new MouseEvent("click"));
   },
 };
 
