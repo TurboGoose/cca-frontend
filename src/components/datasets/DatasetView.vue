@@ -169,11 +169,13 @@
         </v-card>
 
         <v-divider></v-divider>
-
-        <v-checkbox
+        <v-switch
           v-model="rowNumsShown"
+          color="primary"
           label="Show row numbers"
-        ></v-checkbox>
+          hide-details
+          class="ms-5"
+        ></v-switch>
       </v-navigation-drawer>
       <v-data-table-server
         v-if="annotateHeaders"
