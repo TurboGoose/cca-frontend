@@ -187,6 +187,7 @@
         :headers="annotateHeaders"
         :items-length="annotateTotalItems"
         :loading="annotateLoading"
+        :items-per-page-options="[10, 50, 100, 250, 500]"
         show-select
         @update:options="loadItemsForAnnotate"
       >
@@ -238,6 +239,7 @@
         :items-length="searchTotalItems"
         :loading="searchLoading"
         :page="annotatePage"
+        :items-per-page-options="[10, 50, 100, 250, 500]"
         @update:options="loadItemsForSearch"
       >
         <template v-slot:item="{ item }">
