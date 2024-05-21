@@ -1,3 +1,4 @@
+const annotateItems = ref([]);
 <template>
   <v-tabs v-model="tab">
     <v-tab value="annotate">Annotate</v-tab>
@@ -37,23 +38,6 @@
                 >
                   Nothing selected
                 </v-chip>
-
-                <v-btn
-                  class="d-block mt-2 pa-0"
-                  :disabled="
-                    !(
-                      annotationDiff.length ||
-                      (selectedRows.length && currentLabel)
-                    )
-                  "
-                  color="primary"
-                  variant="text"
-                  density="compact"
-                  @click="annotateRows"
-                  @keyup.enter="annotateRows"
-                >
-                  Annotate
-                </v-btn>
               </v-sheet>
               <v-data-table-virtual
                 v-model="selectedLabels"
@@ -97,7 +81,12 @@
 
                     <v-dialog v-model="addLabelDialog" max-width="500px">
                       <template v-slot:activator="{ props: addLabelDialog }">
-                        <v-btn color="primary" dark v-bind="addLabelDialog">
+                        <v-btn
+                          class="ms-1"
+                          color="primary"
+                          dark
+                          v-bind="addLabelDialog"
+                        >
                           Add
                         </v-btn>
                       </template>
@@ -172,31 +161,127 @@
                   <span>No labels</span>
                 </template>
               </v-data-table-virtual>
+              <v-sheet class="d-flex flex-row-reverse">
+                <v-btn
+                  class="d-block mt-3"
+                  :disabled="
+                    !(
+                      annotationDiff.length ||
+                      (selectedRows.length && currentLabel)
+                    )
+                  "
+                  color="primary"
+                  variant="text"
+                  density="compact"
+                  @click="annotateRows"
+                  @keyup.enter="annotateRows"
+                >
+                  Annotate
+                </v-btn>
+              </v-sheet>
+            </v-sheet>
+          </v-list-group>
+          <v-list-group value="columns">
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                title="Columns"
+                prepend-icon="mdi-view-column"
+              ></v-list-item
+            ></template>
+            <v-sheet class="ma-3">
+              <v-sheet>
+                <v-switch
+                  v-model="rowNumsShown"
+                  color="primary"
+                  label="Show row numbers"
+                  hide-details
+                  class="ms-5"
+                ></v-switch>
+              </v-sheet>
+              <v-sheet>
+                <p>Included</p>
+                <v-data-table-virtual
+                  v-model="selectedLabels"
+                  :headers="labelHeaders"
+                  :items="labels"
+                  :search="labelSearch"
+                  height="200px"
+                  density="compact"
+                  fixed-header
+                  item-value="id"
+                  select-strategy="single"
+                  return-object
+                  show-select
+                >
+                  <template v-slot:item.actions="{ item }">
+                    <v-icon
+                      class="me-2"
+                      size="small"
+                      @click="openRenameLabelDialog(item)"
+                    >
+                      mdi-pencil
+                    </v-icon>
+                    <v-icon
+                      class="me-4"
+                      size="small"
+                      @click="deleteLabel(item)"
+                    >
+                      mdi-delete
+                    </v-icon>
+                  </template>
+                </v-data-table-virtual>
+
+                <p>Excluded</p>
+                <v-data-table-virtual
+                  v-model="selectedLabels"
+                  :headers="labelHeaders"
+                  :items="labels"
+                  :search="labelSearch"
+                  height="200px"
+                  density="compact"
+                  fixed-header
+                  item-value="id"
+                  select-strategy="single"
+                  return-object
+                  show-select
+                >
+                  <template v-slot:item.actions="{ item }">
+                    <v-icon
+                      class="me-2"
+                      size="small"
+                      @click="openRenameLabelDialog(item)"
+                    >
+                      mdi-pencil
+                    </v-icon>
+                    <v-icon
+                      class="me-4"
+                      size="small"
+                      @click="deleteLabel(item)"
+                    >
+                      mdi-delete
+                    </v-icon>
+                  </template>
+                </v-data-table-virtual>
+              </v-sheet>
             </v-sheet>
           </v-list-group>
         </v-list>
-
-        <v-divider></v-divider>
-        <v-switch
-          v-model="rowNumsShown"
-          color="primary"
-          label="Show row numbers"
-          hide-details
-          class="ms-5"
-        ></v-switch>
       </v-navigation-drawer>
       <v-data-table-server
-        v-if="annotateHeaders"
+        v-if="tableHeaders"
         v-model="selectedRows"
         item-value="num"
         select-strategy="page"
         v-model:items-per-page="annotateItemsPerPage"
         :items="annotateItems"
-        :headers="annotateHeaders"
+        :headers="tableHeaders"
         :items-length="annotateTotalItems"
         :loading="annotateLoading"
         :items-per-page-options="[10, 50, 100, 250, 500]"
-        show-select
+        :show-select="
+          tableHeaders && tableHeaders.some((header) => header.key === 'labels')
+        "
         @update:options="loadItemsForAnnotate"
       >
         <template v-slot:item.labels="{ item }">
@@ -240,10 +325,10 @@
       </v-toolbar>
 
       <v-data-table-server
-        v-if="searchHeaders"
+        v-if="tableHeaders"
         v-model:items-per-page="searchItemsPerPage"
         :items="searchItems"
-        :headers="searchHeaders"
+        :headers="tableHeaders"
         :items-length="searchTotalItems"
         :loading="searchLoading"
         :page="annotatePage"
@@ -254,7 +339,7 @@
           <tr>
             <td
               :key="header"
-              v-for="header in searchHeaders"
+              v-for="header in tableHeaders"
               v-html="item[header.key]"
             ></td>
           </tr>
@@ -265,23 +350,40 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  onBeforeMount,
-  defineModel,
-  nextTick,
-  watch,
-  computed,
-} from "vue";
+import { ref, onBeforeMount, defineModel, nextTick, computed } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
 const tab = defineModel("tab");
-const openedDrawerGroups = ref(["labels"]);
+const openedDrawerGroups = ref(["columns"]);
 
-const annotateHeaders = ref([]);
+const datasetHeaders = ref();
+const tableHeaders = computed(() => {
+  const headerList = [];
+  if (datasetHeaders.value) {
+    if (rowNumsShown.value) {
+      headerList.push({
+        title: "#",
+        key: "num",
+        sortable: false,
+        filterable: false,
+      });
+    }
+    for (const header of datasetHeaders.value.included) {
+      const headerObj = {
+        title: capitalizeFirstLetter(header.name),
+        key: header.name,
+        sortable: false,
+        filterable: false,
+      };
+      headerList.push(headerObj);
+    }
+  }
+  return headerList;
+});
+
 const annotateItems = ref([]);
 const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
@@ -292,7 +394,6 @@ const rowNumsShown = ref(false);
 const selectedRows = ref([]);
 const annotationDiff = ref([]);
 
-const searchHeaders = ref([]);
 const searchItems = ref([]);
 const searchLoading = ref(false);
 const searchTotalItems = ref(0);
@@ -508,33 +609,10 @@ const loadDatasetHeaders = () => {
     .getDatasetTableInfo(route.params.datasetId)
     .then(({ totalRows, headers }) => {
       annotateTotalItems.value = totalRows;
-
-      for (const header of headers) {
-        const headerObj = {
-          title: capitalizeFirstLetter(header),
-          key: header,
-          sortable: false,
-          filterable: false,
-        };
-        annotateHeaders.value.push(headerObj);
-        searchHeaders.value.push(headerObj);
-      }
+      datasetHeaders.value = headers;
     })
     .catch((err) => console.log(err));
 };
-
-watch(rowNumsShown, (shown) => {
-  if (shown) {
-    annotateHeaders.value.unshift({
-      title: "#",
-      key: "num",
-      sortable: false,
-      filterable: false,
-    });
-  } else {
-    annotateHeaders.value.shift();
-  }
-});
 
 const loadDatasetLabels = () => {
   datasetsAPI

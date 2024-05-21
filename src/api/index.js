@@ -137,7 +137,15 @@ const mockDatasetsAPI = {
   getDatasetTableInfo: async (datasetId) => {
     return {
       totalRows: 11265,
-      headers: ["labels", "username", "sent", "text"],
+      headers: {
+        excluded: [],
+        included: [
+          { name: "labels", width: 0 },
+          { name: "username", width: 0 },
+          { name: "sent", width: 0 },
+          { name: "text", width: 0 },
+        ],
+      },
     };
   },
 
@@ -345,5 +353,5 @@ const realLabelsAPI = {
   },
 };
 
-export const datasetsAPI = realDatasetAPI;
-export const labelsAPI = realLabelsAPI;
+export const datasetsAPI = mockDatasetsAPI;
+export const labelsAPI = mockLabelsAPI;
