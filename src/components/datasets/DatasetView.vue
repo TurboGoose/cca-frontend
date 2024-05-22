@@ -4,284 +4,276 @@
     <v-tab :disabled="isSearchUnavailable" value="search">Search</v-tab>
   </v-tabs>
 
+  <v-navigation-drawer location="right" width="350" permanent>
+    <v-list v-model:opened="openedDrawerGroups">
+      <v-list-group value="labels">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            title="Labels"
+            prepend-icon="mdi-tag-multiple"
+          ></v-list-item
+        ></template>
+        <v-sheet class="ma-3">
+          <v-sheet class="mb-3">
+            Current label:
+            <v-chip
+              v-if="currentLabel"
+              label
+              density="compact"
+              variant="outlined"
+              class="ms-1"
+              >{{ currentLabel.name }}</v-chip
+            >
+            <v-chip
+              v-else
+              label
+              variant="outlined"
+              color="red"
+              density="compact"
+              class="ms-1"
+            >
+              Nothing selected
+            </v-chip>
+          </v-sheet>
+          <v-data-table-virtual
+            v-model="selectedLabels"
+            :headers="labelHeaders"
+            :items="labels"
+            :search="labelSearch"
+            height="200px"
+            density="compact"
+            fixed-header
+            item-value="id"
+            select-strategy="single"
+            return-object
+            show-select
+          >
+            <template v-slot:item.actions="{ item }">
+              <v-icon
+                class="me-2"
+                size="small"
+                @click="openRenameLabelDialog(item)"
+              >
+                mdi-pencil
+              </v-icon>
+              <v-icon class="me-4" size="small" @click="deleteLabel(item)">
+                mdi-delete
+              </v-icon>
+            </template>
+
+            <template v-slot:top>
+              <v-toolbar flat>
+                <v-text-field
+                  class="ms-2"
+                  v-model="labelSearch"
+                  density="compact"
+                  label="Search"
+                  prepend-inner-icon="mdi-magnify"
+                  variant="solo-filled"
+                  flat
+                  hide-details
+                  single-line
+                ></v-text-field>
+
+                <v-dialog v-model="addLabelDialog" max-width="500px">
+                  <template v-slot:activator="{ props: addLabelDialog }">
+                    <v-btn
+                      class="ms-1"
+                      color="primary"
+                      dark
+                      v-bind="addLabelDialog"
+                    >
+                      Add
+                    </v-btn>
+                  </template>
+                  <v-card>
+                    <v-card-title>
+                      <span class="text-h5">Add label</span>
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-text-field
+                        v-model="newLabelName"
+                        label="New label name"
+                      ></v-text-field>
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="closeAddLabelDialog"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="addLabel"
+                      >
+                        Add
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+
+                <v-dialog v-model="renameLabelDialog" max-width="500px">
+                  <v-card>
+                    <v-card-title>
+                      <span class="text-h5">Rename label</span>
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-text-field
+                        v-model="newLabelName"
+                        label="New dataset name"
+                      ></v-text-field>
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="closeRenameLabelDialog"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="renameLabel"
+                      >
+                        Save
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-toolbar>
+            </template>
+
+            <template v-slot:no-data>
+              <span>No labels</span>
+            </template>
+          </v-data-table-virtual>
+          <v-sheet class="d-flex flex-row-reverse">
+            <v-btn
+              class="d-block mt-3"
+              :disabled="
+                !(
+                  annotationDiff.length ||
+                  (selectedRows.length && currentLabel)
+                )
+              "
+              color="primary"
+              variant="text"
+              density="compact"
+              @click="annotateRows"
+              @keyup.enter="annotateRows"
+            >
+              Annotate
+            </v-btn>
+          </v-sheet>
+        </v-sheet>
+      </v-list-group>
+      <v-list-group value="columns">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            title="Columns"
+            prepend-icon="mdi-view-column"
+          ></v-list-item
+        ></template>
+        <v-sheet class="ma-3">
+          <v-sheet>
+            <v-switch
+              v-model="rowNumsShown"
+              color="primary"
+              label="Show row numbers"
+              hide-details
+              class="ms-3 mt-n4"
+            ></v-switch>
+          </v-sheet>
+          <v-sheet>
+            <p class="text-h6 ms-3">Included</p>
+            <v-divider></v-divider>
+            <v-data-table-virtual
+              v-if="datasetHeaders"
+              :headers="columnHeaders"
+              :items="datasetHeaders.included"
+              height="200px"
+              density="compact"
+              fixed-header
+            >
+              <template v-slot:item.actions="{ item }">
+                <v-icon
+                  class="me-1"
+                  size="small"
+                  @click="moveColumn(item, 'left')"
+                >
+                  mdi-arrow-up
+                </v-icon>
+                <v-icon
+                  class="me-2"
+                  size="small"
+                  @click="moveColumn(item, 'right')"
+                >
+                  mdi-arrow-down
+                </v-icon>
+                <v-icon class="me-1" size="small" @click="excludeColumn(item)">
+                  mdi-close
+                </v-icon>
+              </template>
+
+              <template v-slot:item.width="{ item }">
+                <v-text-field
+                  v-model="item.width"
+                  density="compact"
+                  flat
+                  hide-details
+                  single-line
+                >
+                </v-text-field>
+              </template>
+            </v-data-table-virtual>
+
+            <p class="text-h6 ms-3">Excluded</p>
+            <v-data-table-virtual
+              v-if="datasetHeaders"
+              :headers="columnHeaders"
+              :items="datasetHeaders.excluded"
+              height="200px"
+              density="compact"
+              fixed-header
+            >
+              <template v-slot:item.actions="{ item }">
+                <v-icon class="me-1" size="small" @click="includeColumn(item)">
+                  mdi-plus
+                </v-icon>
+              </template>
+            </v-data-table-virtual>
+          </v-sheet>
+        </v-sheet>
+      </v-list-group>
+    </v-list>
+  </v-navigation-drawer>
   <v-tabs-window v-model="tab">
     <v-tabs-window-item value="annotate">
-      <v-navigation-drawer location="right" width="350" permanent>
-        <v-list v-model:opened="openedDrawerGroups">
-          <v-list-group value="labels">
-            <template v-slot:activator="{ props }">
-              <v-list-item
-                v-bind="props"
-                title="Labels"
-                prepend-icon="mdi-tag-multiple"
-              ></v-list-item
-            ></template>
-            <v-sheet class="ma-3">
-              <v-sheet class="mb-3">
-                Current label:
-                <v-chip
-                  v-if="currentLabel"
-                  label
-                  density="compact"
-                  variant="outlined"
-                  class="ms-1"
-                  >{{ currentLabel.name }}</v-chip
-                >
-                <v-chip
-                  v-else
-                  label
-                  variant="outlined"
-                  color="red"
-                  density="compact"
-                  class="ms-1"
-                >
-                  Nothing selected
-                </v-chip>
-              </v-sheet>
-              <v-data-table-virtual
-                v-model="selectedLabels"
-                :headers="labelHeaders"
-                :items="labels"
-                :search="labelSearch"
-                height="200px"
-                density="compact"
-                fixed-header
-                item-value="id"
-                select-strategy="single"
-                return-object
-                show-select
-              >
-                <template v-slot:item.actions="{ item }">
-                  <v-icon
-                    class="me-2"
-                    size="small"
-                    @click="openRenameLabelDialog(item)"
-                  >
-                    mdi-pencil
-                  </v-icon>
-                  <v-icon class="me-4" size="small" @click="deleteLabel(item)">
-                    mdi-delete
-                  </v-icon>
-                </template>
-
-                <template v-slot:top>
-                  <v-toolbar flat>
-                    <v-text-field
-                      class="ms-2"
-                      v-model="labelSearch"
-                      density="compact"
-                      label="Search"
-                      prepend-inner-icon="mdi-magnify"
-                      variant="solo-filled"
-                      flat
-                      hide-details
-                      single-line
-                    ></v-text-field>
-
-                    <v-dialog v-model="addLabelDialog" max-width="500px">
-                      <template v-slot:activator="{ props: addLabelDialog }">
-                        <v-btn
-                          class="ms-1"
-                          color="primary"
-                          dark
-                          v-bind="addLabelDialog"
-                        >
-                          Add
-                        </v-btn>
-                      </template>
-                      <v-card>
-                        <v-card-title>
-                          <span class="text-h5">Add label</span>
-                        </v-card-title>
-
-                        <v-card-text>
-                          <v-text-field
-                            v-model="newLabelName"
-                            label="New label name"
-                          ></v-text-field>
-                        </v-card-text>
-
-                        <v-card-actions>
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="closeAddLabelDialog"
-                          >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="addLabel"
-                          >
-                            Add
-                          </v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
-
-                    <v-dialog v-model="renameLabelDialog" max-width="500px">
-                      <v-card>
-                        <v-card-title>
-                          <span class="text-h5">Rename label</span>
-                        </v-card-title>
-
-                        <v-card-text>
-                          <v-text-field
-                            v-model="newLabelName"
-                            label="New dataset name"
-                          ></v-text-field>
-                        </v-card-text>
-
-                        <v-card-actions>
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="closeRenameLabelDialog"
-                          >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="renameLabel"
-                          >
-                            Save
-                          </v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
-                  </v-toolbar>
-                </template>
-
-                <template v-slot:no-data>
-                  <span>No labels</span>
-                </template>
-              </v-data-table-virtual>
-              <v-sheet class="d-flex flex-row-reverse">
-                <v-btn
-                  class="d-block mt-3"
-                  :disabled="
-                    !(
-                      annotationDiff.length ||
-                      (selectedRows.length && currentLabel)
-                    )
-                  "
-                  color="primary"
-                  variant="text"
-                  density="compact"
-                  @click="annotateRows"
-                  @keyup.enter="annotateRows"
-                >
-                  Annotate
-                </v-btn>
-              </v-sheet>
-            </v-sheet>
-          </v-list-group>
-          <v-list-group value="columns">
-            <template v-slot:activator="{ props }">
-              <v-list-item
-                v-bind="props"
-                title="Columns"
-                prepend-icon="mdi-view-column"
-              ></v-list-item
-            ></template>
-            <v-sheet class="ma-3">
-              <v-sheet>
-                <v-switch
-                  v-model="rowNumsShown"
-                  color="primary"
-                  label="Show row numbers"
-                  hide-details
-                  class="ms-3 mt-n4"
-                ></v-switch>
-              </v-sheet>
-              <v-sheet>
-                <p class="text-h6 ms-3">Included</p>
-                <v-divider></v-divider>
-                <v-data-table-virtual
-                  v-if="datasetHeaders"
-                  :headers="columnHeaders"
-                  :items="datasetHeaders.included"
-                  height="200px"
-                  density="compact"
-                  fixed-header
-                >
-                  <template v-slot:item.actions="{ item }">
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="moveColumn(item, 'left')"
-                    >
-                      mdi-arrow-up
-                    </v-icon>
-                    <v-icon
-                      class="me-2"
-                      size="small"
-                      @click="moveColumn(item, 'right')"
-                    >
-                      mdi-arrow-down
-                    </v-icon>
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="excludeColumn(item)"
-                    >
-                      mdi-close
-                    </v-icon>
-                  </template>
-
-                  <template v-slot:item.width="{ item }">
-                    <v-text-field
-                      v-model="item.width"
-                      density="compact"
-                      flat
-                      hide-details
-                      single-line
-                    >
-                    </v-text-field>
-                  </template>
-                </v-data-table-virtual>
-
-                <p class="text-h6 ms-3">Excluded</p>
-                <v-data-table-virtual
-                  v-if="datasetHeaders"
-                  :headers="columnHeaders"
-                  :items="datasetHeaders.excluded"
-                  height="200px"
-                  density="compact"
-                  fixed-header
-                >
-                  <template v-slot:item.actions="{ item }">
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="includeColumn(item)"
-                    >
-                      mdi-plus
-                    </v-icon>
-                  </template>
-                </v-data-table-virtual>
-              </v-sheet>
-            </v-sheet>
-          </v-list-group>
-        </v-list>
-      </v-navigation-drawer>
       <v-data-table-server
-        v-if="tableHeaders"
+        v-if="annotateHeaders"
         v-model="selectedRows"
         item-value="num"
         select-strategy="page"
         v-model:items-per-page="annotateItemsPerPage"
         :items="annotateItems"
-        :headers="tableHeaders"
+        :headers="annotateHeaders"
         :items-length="annotateTotalItems"
         :loading="annotateLoading"
         :items-per-page-options="[10, 50, 100, 250, 500]"
         :show-select="
-          tableHeaders && tableHeaders.some((header) => header.key === 'labels')
+          annotateHeaders && annotateHeaders.some((header) => header.key === 'labels')
         "
         @update:options="loadItemsForAnnotate"
       >
@@ -326,10 +318,10 @@
       </v-toolbar>
 
       <v-data-table-server
-        v-if="tableHeaders"
+        v-if="searchHeaders"
         v-model:items-per-page="searchItemsPerPage"
         :items="searchItems"
-        :headers="tableHeaders"
+        :headers="searchHeaders"
         :items-length="searchTotalItems"
         :loading="searchLoading"
         :page="annotatePage"
@@ -340,7 +332,7 @@
           <tr>
             <td
               :key="header"
-              v-for="header in tableHeaders"
+              v-for="header in searchHeaders"
               v-html="item[header.key]"
             ></td>
           </tr>
@@ -368,7 +360,7 @@ const tab = defineModel("tab");
 const openedDrawerGroups = ref(["columns"]);
 
 const datasetHeaders = ref();
-const tableHeaders = computed(() => {
+const annotateHeaders = computed(() => {
   const headerList = [];
   if (datasetHeaders.value) {
     if (rowNumsShown.value) {
@@ -394,6 +386,10 @@ const tableHeaders = computed(() => {
     }
   }
   return headerList;
+});
+
+const searchHeaders = computed(() => {
+  return annotateHeaders.value.filter((header) => header.key !== "labels");
 });
 
 const annotateItems = ref([]);
