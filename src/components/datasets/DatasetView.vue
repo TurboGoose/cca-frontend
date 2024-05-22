@@ -351,14 +351,21 @@
 </template>
 
 <script setup>
-import { ref, onBeforeMount, defineModel, nextTick, computed } from "vue";
+import {
+  ref,
+  onBeforeMount,
+  defineModel,
+  nextTick,
+  computed,
+  watch,
+} from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
 const tab = defineModel("tab");
-const openedDrawerGroups = ref(["labels"]);
+const openedDrawerGroups = ref(["columns"]);
 
 const datasetHeaders = ref();
 const tableHeaders = computed(() => {
@@ -496,6 +503,31 @@ const changeColumnVisibility = (columnItem, from, to) => {
   from.splice(index, 1);
   to.push(columnItem);
 };
+
+let needToUpdate = false;
+
+const updateDatasetHeadersPreset = async () => {
+  if (needToUpdate && datasetHeaders.value) {
+    try {
+      const ok = await datasetsAPI.updateDatasetHeaderPreset(
+        route.params.datasetId,
+        datasetHeaders.value
+      );
+      console.log(
+        ok
+          ? `Header preset ${JSON.stringify(datasetHeaders.value)} saved`
+          : "Failed to save header preset"
+      );
+    } catch (err) {
+      console.log(err);
+    }
+    needToUpdate = false;
+  }
+  setTimeout(updateDatasetHeadersPreset, 10000);
+};
+updateDatasetHeadersPreset();
+
+watch(datasetHeaders, () => (needToUpdate = true), { deep: "true" });
 
 const addAnnotation = (rowNum, labelId, added) => {
   const reversedAnnotationIndx = annotationDiff.value.findIndex(
