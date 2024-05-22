@@ -1,373 +1,341 @@
 <template>
-  <v-tabs v-model="tab">
-    <v-tab value="annotate">Annotate</v-tab>
-    <v-tab :disabled="isSearchUnavailable" value="search">Search</v-tab>
-  </v-tabs>
-
-  <v-tabs-window v-model="tab">
-    <v-tabs-window-item value="annotate">
-      <v-navigation-drawer location="right" width="350" permanent>
-        <v-list v-model:opened="openedDrawerGroups">
-          <v-list-group value="labels">
-            <template v-slot:activator="{ props }">
-              <v-list-item
-                v-bind="props"
-                title="Labels"
-                prepend-icon="mdi-tag-multiple"
-              ></v-list-item
-            ></template>
-            <v-sheet class="ma-3">
-              <v-sheet class="mb-3">
-                Current label:
-                <v-chip
-                  v-if="currentLabel"
-                  label
-                  density="compact"
-                  variant="outlined"
-                  class="ms-1"
-                  >{{ currentLabel.name }}</v-chip
-                >
-                <v-chip
-                  v-else
-                  label
-                  variant="outlined"
-                  color="red"
-                  density="compact"
-                  class="ms-1"
-                >
-                  Nothing selected
-                </v-chip>
-              </v-sheet>
-              <v-data-table-virtual
-                v-model="selectedLabels"
-                :headers="labelHeaders"
-                :items="labels"
-                :search="labelSearch"
-                height="200px"
-                density="compact"
-                fixed-header
-                item-value="id"
-                select-strategy="single"
-                return-object
-                show-select
-              >
-                <template v-slot:item.actions="{ item }">
-                  <v-icon
-                    class="me-2"
-                    size="small"
-                    @click="openRenameLabelDialog(item)"
-                  >
-                    mdi-pencil
-                  </v-icon>
-                  <v-icon class="me-4" size="small" @click="deleteLabel(item)">
-                    mdi-delete
-                  </v-icon>
-                </template>
-
-                <template v-slot:top>
-                  <v-toolbar flat>
-                    <v-text-field
-                      class="ms-2"
-                      v-model="labelSearch"
-                      density="compact"
-                      label="Search"
-                      prepend-inner-icon="mdi-magnify"
-                      variant="solo-filled"
-                      flat
-                      hide-details
-                      single-line
-                    ></v-text-field>
-
-                    <v-dialog v-model="addLabelDialog" max-width="500px">
-                      <template v-slot:activator="{ props: addLabelDialog }">
-                        <v-btn
-                          class="ms-1"
-                          color="primary"
-                          dark
-                          v-bind="addLabelDialog"
-                        >
-                          Add
-                        </v-btn>
-                      </template>
-                      <v-card>
-                        <v-card-title>
-                          <span class="text-h5">Add label</span>
-                        </v-card-title>
-
-                        <v-card-text>
-                          <v-text-field
-                            v-model="newLabelName"
-                            label="New label name"
-                          ></v-text-field>
-                        </v-card-text>
-
-                        <v-card-actions>
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="closeAddLabelDialog"
-                          >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="addLabel"
-                          >
-                            Add
-                          </v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
-
-                    <v-dialog v-model="renameLabelDialog" max-width="500px">
-                      <v-card>
-                        <v-card-title>
-                          <span class="text-h5">Rename label</span>
-                        </v-card-title>
-
-                        <v-card-text>
-                          <v-text-field
-                            v-model="newLabelName"
-                            label="New dataset name"
-                          ></v-text-field>
-                        </v-card-text>
-
-                        <v-card-actions>
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="closeRenameLabelDialog"
-                          >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="renameLabel"
-                          >
-                            Save
-                          </v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
-                  </v-toolbar>
-                </template>
-
-                <template v-slot:no-data>
-                  <span>No labels</span>
-                </template>
-              </v-data-table-virtual>
-              <v-sheet class="d-flex flex-row-reverse">
-                <v-btn
-                  class="d-block mt-3"
-                  :disabled="
-                    !(
-                      annotationDiff.length ||
-                      (selectedRows.length && currentLabel)
-                    )
-                  "
-                  color="primary"
-                  variant="text"
-                  density="compact"
-                  @click="annotateRows"
-                  @keyup.enter="annotateRows"
-                >
-                  Annotate
-                </v-btn>
-              </v-sheet>
-            </v-sheet>
-          </v-list-group>
-          <v-list-group value="columns">
-            <template v-slot:activator="{ props }">
-              <v-list-item
-                v-bind="props"
-                title="Columns"
-                prepend-icon="mdi-view-column"
-              ></v-list-item
-            ></template>
-            <v-sheet class="ma-3">
-              <v-sheet>
-                <v-switch
-                  v-model="rowNumsShown"
-                  color="primary"
-                  label="Show row numbers"
-                  hide-details
-                  class="ms-3 mt-n4"
-                ></v-switch>
-              </v-sheet>
-              <v-sheet>
-                <p class="text-h6 ms-3">Included</p>
-                <v-divider></v-divider>
-                <v-data-table-virtual
-                  v-if="datasetHeaders"
-                  :headers="columnHeaders"
-                  :items="datasetHeaders.included"
-                  height="200px"
-                  density="compact"
-                  fixed-header
-                >
-                  <template v-slot:item.actions="{ item }">
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="moveColumn(item, 'left')"
-                    >
-                      mdi-arrow-up
-                    </v-icon>
-                    <v-icon
-                      class="me-2"
-                      size="small"
-                      @click="moveColumn(item, 'right')"
-                    >
-                      mdi-arrow-down
-                    </v-icon>
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="excludeColumn(item)"
-                    >
-                      mdi-close
-                    </v-icon>
-                  </template>
-
-                  <template v-slot:item.width="{ item }">
-                    <v-text-field
-                      v-model="item.width"
-                      density="compact"
-                      flat
-                      hide-details
-                      single-line
-                    >
-                    </v-text-field>
-                  </template>
-                </v-data-table-virtual>
-
-                <p class="text-h6 ms-3">Excluded</p>
-                <v-data-table-virtual
-                  v-if="datasetHeaders"
-                  :headers="columnHeaders"
-                  :items="datasetHeaders.excluded"
-                  height="200px"
-                  density="compact"
-                  fixed-header
-                >
-                  <template v-slot:item.actions="{ item }">
-                    <v-icon
-                      class="me-1"
-                      size="small"
-                      @click="includeColumn(item)"
-                    >
-                      mdi-plus
-                    </v-icon>
-                  </template>
-                </v-data-table-virtual>
-              </v-sheet>
-            </v-sheet>
-          </v-list-group>
-        </v-list>
-      </v-navigation-drawer>
-      <v-data-table-server
-        v-if="tableHeaders"
-        v-model="selectedRows"
-        item-value="num"
-        select-strategy="page"
-        v-model:items-per-page="annotateItemsPerPage"
-        :items="annotateItems"
-        :headers="tableHeaders"
-        :items-length="annotateTotalItems"
-        :loading="annotateLoading"
-        :items-per-page-options="[10, 50, 100, 250, 500]"
-        :show-select="
-          tableHeaders && tableHeaders.some((header) => header.key === 'labels')
-        "
-        @update:options="loadItemsForAnnotate"
-      >
-        <template v-slot:item.labels="{ item }">
-          <v-chip-group>
+  <v-navigation-drawer location="right" width="350" permanent>
+    <v-list v-model:opened="openedDrawerGroups">
+      <v-list-group value="labels">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            title="Labels"
+            prepend-icon="mdi-tag-multiple"
+          ></v-list-item
+        ></template>
+        <v-sheet class="ma-3">
+          <v-sheet class="mb-3">
+            Current label:
             <v-chip
+              v-if="currentLabel"
               label
-              closable
+              density="compact"
               variant="outlined"
-              v-for="label in item.labels"
-              :key="label.id"
-              @click:close="addAnnotation(item.num, label.id, false)"
+              class="ms-1"
+              >{{ currentLabel.name }}</v-chip
             >
-              {{ label.name }}
+            <v-chip
+              v-else
+              label
+              variant="outlined"
+              color="red"
+              density="compact"
+              class="ms-1"
+            >
+              Nothing selected
             </v-chip>
-          </v-chip-group>
-        </template>
-      </v-data-table-server>
-    </v-tabs-window-item>
+          </v-sheet>
+          <v-data-table-virtual
+            v-model="selectedLabels"
+            :headers="labelHeaders"
+            :items="labels"
+            :search="labelSearch"
+            density="compact"
+            item-value="id"
+            select-strategy="single"
+            return-object
+            show-select
+          >
+            <template v-slot:item.actions="{ item }">
+              <v-icon
+                class="me-2"
+                size="small"
+                @click="openRenameLabelDialog(item)"
+              >
+                mdi-pencil
+              </v-icon>
+              <v-icon class="me-4" size="small" @click="deleteLabel(item)">
+                mdi-delete
+              </v-icon>
+            </template>
 
-    <v-tabs-window-item value="search">
-      <v-toolbar flat>
-        <v-text-field
-          v-model="searchQuery"
-          density="compact"
-          label="Query"
-          prepend-inner-icon="mdi-magnify"
-          variant="solo-filled"
-          flat
-          hide-details
-          single-line
-          class="ms-2"
-        ></v-text-field>
-        <v-btn
-          @click="
-            loadItemsForSearch({ page: 1, itemsPerPage: searchItemsPerPage })
-          "
-          color="primary"
-          dark
-          >Search</v-btn
+            <template v-slot:top>
+              <v-toolbar flat>
+                <v-text-field
+                  class="ms-2"
+                  v-model="labelSearch"
+                  density="compact"
+                  label="Search"
+                  prepend-inner-icon="mdi-magnify"
+                  variant="solo-filled"
+                  flat
+                  hide-details
+                  single-line
+                ></v-text-field>
+
+                <v-dialog v-model="addLabelDialog" max-width="500px">
+                  <template v-slot:activator="{ props: addLabelDialog }">
+                    <v-btn
+                      class="ms-1"
+                      color="primary"
+                      dark
+                      v-bind="addLabelDialog"
+                    >
+                      Add
+                    </v-btn>
+                  </template>
+                  <v-card>
+                    <v-card-title>
+                      <span class="text-h5">Add label</span>
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-text-field
+                        v-model="newLabelName"
+                        label="New label name"
+                      ></v-text-field>
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="closeAddLabelDialog"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="addLabel"
+                      >
+                        Add
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+
+                <v-dialog v-model="renameLabelDialog" max-width="500px">
+                  <v-card>
+                    <v-card-title>
+                      <span class="text-h5">Rename label</span>
+                    </v-card-title>
+
+                    <v-card-text>
+                      <v-text-field
+                        v-model="newLabelName"
+                        label="New dataset name"
+                      ></v-text-field>
+                    </v-card-text>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="closeRenameLabelDialog"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        color="blue-darken-1"
+                        variant="text"
+                        @click="renameLabel"
+                      >
+                        Save
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-toolbar>
+            </template>
+
+            <template v-slot:no-data>
+              <span>No labels</span>
+            </template>
+          </v-data-table-virtual>
+          <v-sheet class="d-flex flex-row-reverse">
+            <v-btn
+              class="d-block mt-3"
+              :disabled="
+                !(
+                  annotationDiff.length ||
+                  (selectedRows.length && currentLabel)
+                )
+              "
+              color="primary"
+              variant="text"
+              density="compact"
+              @click="annotateRows"
+              @keyup.enter="annotateRows"
+            >
+              Annotate
+            </v-btn>
+          </v-sheet>
+        </v-sheet>
+      </v-list-group>
+      <v-list-group value="columns">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            title="Columns"
+            prepend-icon="mdi-view-column"
+          ></v-list-item
+        ></template>
+        <v-sheet class="ma-3">
+          <v-sheet>
+            <v-switch
+              v-model="rowNumsShown"
+              color="primary"
+              label="Show row numbers"
+              hide-details
+              class="ms-3 mt-n4"
+            ></v-switch>
+          </v-sheet>
+          <v-sheet>
+            <p class="text-h6 ms-3">Included</p>
+            <v-data-table-virtual
+              v-if="datasetHeaders"
+              :headers="columnHeaders"
+              :items="datasetHeaders.included"
+              density="compact"
+            >
+              <template v-slot:item.actions="{ item }">
+                <v-icon
+                  class="me-1"
+                  size="small"
+                  @click="moveColumn(item, 'left')"
+                >
+                  mdi-arrow-up
+                </v-icon>
+                <v-icon
+                  class="me-2"
+                  size="small"
+                  @click="moveColumn(item, 'right')"
+                >
+                  mdi-arrow-down
+                </v-icon>
+                <v-icon class="me-1" size="small" @click="excludeColumn(item)">
+                  mdi-close
+                </v-icon>
+              </template>
+
+              <template v-slot:item.width="{ item }">
+                <v-text-field
+                  v-model="item.width"
+                  density="compact"
+                  flat
+                  hide-details
+                  single-line
+                >
+                </v-text-field>
+              </template>
+            </v-data-table-virtual>
+
+            <p class="text-h6 ms-3 mt-2">Excluded</p>
+            <v-data-table-virtual
+              v-if="datasetHeaders"
+              :headers="columnHeaders"
+              :items="datasetHeaders.excluded"
+              density="compact"
+            >
+              <template v-slot:item.actions="{ item }">
+                <v-icon class="me-1" size="small" @click="includeColumn(item)">
+                  mdi-plus
+                </v-icon>
+              </template>
+            </v-data-table-virtual>
+          </v-sheet>
+        </v-sheet>
+      </v-list-group>
+    </v-list>
+  </v-navigation-drawer>
+  <v-toolbar flat>
+    <v-text-field
+      v-model="searchQuery"
+      :disabled="isSearchUnavailable"
+      density="compact"
+      label="Query"
+      prepend-inner-icon="mdi-magnify"
+      variant="solo-filled"
+      flat
+      hide-details
+      single-line
+      class="ms-2"
+    ></v-text-field>
+    <v-btn
+      @click="
+        searchMode = true;
+        loadItems({ page: 1, itemsPerPage });
+      "
+      color="primary"
+      dark
+      >Search</v-btn
+    >
+    <v-btn
+      @click="
+        searchMode = false;
+        loadItems({ page: 1, itemsPerPage });
+      "
+      color="primary"
+      dark
+      >Reset</v-btn
+    >
+  </v-toolbar>
+  <v-data-table-server
+    v-if="tableHeaders"
+    v-model="selectedRows"
+    item-value="num"
+    select-strategy="page"
+    v-model:items-per-page="itemsPerPage"
+    :items="items"
+    :headers="tableHeaders"
+    :items-length="totalItems"
+    :loading="loading"
+    :items-per-page-options="[10, 50, 100, 250, 500]"
+    :show-select="
+      tableHeaders && tableHeaders.some((header) => header.key === 'labels')
+    "
+    @update:options="loadItems"
+  >
+    <template v-slot:item.labels="{ item }">
+      <v-chip-group>
+        <v-chip
+          label
+          closable
+          variant="outlined"
+          v-for="label in item.labels"
+          :key="label.id"
+          @click:close="addAnnotation(item.num, label.id, false)"
         >
-      </v-toolbar>
+          {{ label.name }}
+        </v-chip>
+      </v-chip-group>
+    </template>
 
-      <v-data-table-server
-        v-if="tableHeaders"
-        v-model:items-per-page="searchItemsPerPage"
-        :items="searchItems"
-        :headers="tableHeaders"
-        :items-length="searchTotalItems"
-        :loading="searchLoading"
-        :page="annotatePage"
-        :items-per-page-options="[10, 50, 100, 250, 500]"
-        @update:options="loadItemsForSearch"
-      >
-        <template v-slot:item="{ item }">
-          <tr>
-            <td
-              :key="header"
-              v-for="header in tableHeaders"
-              v-html="item[header.key]"
-            ></td>
-          </tr>
-        </template>
-      </v-data-table-server>
-    </v-tabs-window-item>
-  </v-tabs-window>
+    <template
+      v-if="searchMode"
+      v-for="headerKey in tableHeaderKeys" 
+      v-slot:[]="{ item }"
+    >
+    <template ></template>
+      <template v-html="item"></template>
+    </template>
+  </v-data-table-server>
 </template>
 
 <script setup>
-import {
-  ref,
-  onBeforeMount,
-  defineModel,
-  nextTick,
-  computed,
-  watch,
-} from "vue";
+import { ref, onBeforeMount, nextTick, computed, watch } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
-const tab = defineModel("tab");
 const openedDrawerGroups = ref(["columns"]);
 
+const searchMode = ref(false);
+
 const datasetHeaders = ref();
+const tableHeaderKeys = computed(() =>
+  tableHeaders.value.filter((el) => el.key !== "labels").map((el) => "item." + el.key)
+);
 const tableHeaders = computed(() => {
   const headerList = [];
   if (datasetHeaders.value) {
@@ -395,21 +363,20 @@ const tableHeaders = computed(() => {
   }
   return headerList;
 });
-
-const annotateItems = ref([]);
-const annotateLoading = ref(true);
-const annotateTotalItems = ref(0);
-const annotateItemsPerPage = ref(50);
-const annotatePage = ref(1);
+const loading = ref(false);
 const rowNumsShown = ref(false);
-
+const itemsPerPage = ref(50);
 const selectedRows = ref([]);
 const annotationDiff = ref([]);
+const items = ref([]);
+const totalItems = ref(0);
 
-const searchItems = ref([]);
-const searchLoading = ref(false);
-const searchTotalItems = ref(0);
-const searchItemsPerPage = ref(50);
+const page = computed(() =>
+  searchMode ? searchPage.value : annotatePage.value
+);
+const annotatePage = ref(1);
+const searchPage = ref(1);
+
 const searchQuery = defineModel({ default: "" });
 const isSearchUnavailable = ref(true);
 
@@ -551,12 +518,12 @@ const annotateRows = async () => {
     let itemIndex = 0;
     for (const rowNum of selectedRows.value) {
       while (
-        itemIndex < annotateItems.value.length &&
-        annotateItems.value[itemIndex].num != rowNum
+        itemIndex < items.value.length &&
+        items.value[itemIndex].num != rowNum
       ) {
         itemIndex++;
       }
-      const itemLabels = annotateItems.value[itemIndex].labels;
+      const itemLabels = items.value[itemIndex].labels;
       if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
         addAnnotation(rowNum, currentLabel.value.id, true);
       }
@@ -571,12 +538,13 @@ const annotateRows = async () => {
       let itemIndex = 0;
       for (const rowNum of selectedRows.value) {
         while (
-          itemIndex < annotateItems.value.length &&
-          annotateItems.value[itemIndex].num != rowNum
+          itemIndex < items.value.length &&
+          items.value[itemIndex].num != rowNum
         ) {
           itemIndex++;
+          f;
         }
-        const itemLabels = annotateItems.value[itemIndex].labels;
+        const itemLabels = items.value[itemIndex].labels;
         if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
           itemLabels.push(currentLabel.value);
         }
@@ -621,7 +589,10 @@ const renameLabel = async () => {
         newLabelName.value
       );
       renamedLabel.value.name = renamed.name;
-      loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+      loadItems({
+        page: annotatePage.value,
+        itemsPerPage,
+      });
     } catch (err) {
       console.log(err);
     }
@@ -641,54 +612,54 @@ const deleteLabel = async (labelItem) => {
   if (ok) {
     const index = labels.value.indexOf(labelItem);
     labels.value.splice(index, 1);
-    loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+    loadItems({ page: annotatePage, itemsPerPage });
   } else {
     console.log(`Label ${labelItem.id} was not deleted`);
   }
 };
 
-const loadItemsForSearch = ({ page, itemsPerPage }) => {
-  if (!searchQuery.value) {
-    return;
-  }
-  searchLoading.value = true;
-  datasetsAPI
-    .searchInDatasetByQuery(
-      route.params.datasetId,
-      searchQuery.value,
-      page,
-      itemsPerPage
-    )
-    .then((res) => {
-      if (res.timeout) {
-        console.log(`Search request ${query} timed out`);
-      }
-      searchTotalItems.value = res.total;
-      searchItems.value = res.rows.map((item) => {
-        const newItem = { num: item.num };
-        for (const key in item.src) {
-          newItem[key] = item.src[key];
+const loadItems = ({ page, itemsPerPage }) => {
+  loading.value = true;
+  if (searchMode.value) {
+    if (!searchQuery.value) {
+      return;
+    }
+    loading.value = true;
+    datasetsAPI
+      .searchInDatasetByQuery(
+        route.params.datasetId,
+        searchQuery.value,
+        page,
+        itemsPerPage
+      )
+      .then((res) => {
+        if (res.timeout) {
+          console.log(`Search request ${query} timed out`);
         }
-        return newItem;
-      });
-    })
-    .catch((err) => console.log(err)) // catch properly
-    .finally(() => (searchLoading.value = false));
-};
-
-const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
-  annotateLoading.value = true;
-  datasetsAPI
-    .getDatasetPage(route.params.datasetId, page, itemsPerPage)
-    .then((items) => {
-      const offset = (page - 1) * itemsPerPage + 1;
-      for (let i = 0; i < items.length; i++) {
-        items[i]["num"] = offset + i;
-      }
-      annotateItems.value = items;
-    })
-    .catch((err) => console.log(err)) // catch properly
-    .finally(() => (annotateLoading.value = false));
+        totalItems.value = res.total;
+        items.value = res.rows.map((item) => {
+          const newItem = { num: item.num };
+          for (const key in item.src) {
+            newItem[key] = item.src[key];
+          }
+          return newItem;
+        });
+      })
+      .catch((err) => console.log(err)) // catch properly
+      .finally(() => (loading.value = false));
+  } else {
+    datasetsAPI
+      .getDatasetPage(route.params.datasetId, page, itemsPerPage)
+      .then((loadedItems) => {
+        const offset = (page - 1) * itemsPerPage + 1;
+        for (let i = 0; i < loadedItems.length; i++) {
+          loadedItems[i]["num"] = offset + i;
+        }
+        items.value = loadedItems;
+      })
+      .catch((err) => console.log(err)) // catch properly
+      .finally(() => (loading.value = false));
+  }
 };
 
 const pingDatasetSearchStatus = async () => {
@@ -711,7 +682,7 @@ const loadDatasetHeaders = () => {
   datasetsAPI
     .getDatasetTableInfo(route.params.datasetId)
     .then(({ totalRows, headers }) => {
-      annotateTotalItems.value = totalRows;
+      totalItems.value = totalRows;
       datasetHeaders.value = JSON.parse(headers);
     })
     .catch((err) => console.log(err));
