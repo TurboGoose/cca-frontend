@@ -380,15 +380,17 @@ const tableHeaders = computed(() => {
         filterable: false,
       });
     }
-    for (const header of datasetHeaders.value.included) {
-      const headerObj = {
-        title: capitalizeFirstLetter(header.name),
-        width: header.width,
-        key: header.name,
-        sortable: false,
-        filterable: false,
-      };
-      headerList.push(headerObj);
+    if (datasetHeaders.value.included) {
+      for (const header of datasetHeaders.value.included) {
+        const headerObj = {
+          title: capitalizeFirstLetter(header.name),
+          width: header.width,
+          key: header.name,
+          sortable: false,
+          filterable: false,
+        };
+        headerList.push(headerObj);
+      }
     }
   }
   return headerList;
@@ -509,7 +511,7 @@ let needToUpdate = false;
 const updateDatasetHeadersPreset = async () => {
   if (needToUpdate && datasetHeaders.value) {
     try {
-      const ok = await datasetsAPI.updateDatasetHeaderPreset(
+      const ok = await datasetsAPI.updateDatasetTableInfo(
         route.params.datasetId,
         datasetHeaders.value
       );
@@ -523,7 +525,7 @@ const updateDatasetHeadersPreset = async () => {
     }
     needToUpdate = false;
   }
-  setTimeout(updateDatasetHeadersPreset, 10000);
+  setTimeout(updateDatasetHeadersPreset, 5000);
 };
 updateDatasetHeadersPreset();
 
@@ -710,7 +712,7 @@ const loadDatasetHeaders = () => {
     .getDatasetTableInfo(route.params.datasetId)
     .then(({ totalRows, headers }) => {
       annotateTotalItems.value = totalRows;
-      datasetHeaders.value = headers;
+      datasetHeaders.value = JSON.parse(headers);
     })
     .catch((err) => console.log(err));
 };

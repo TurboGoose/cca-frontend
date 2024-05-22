@@ -40,9 +40,14 @@ const realDatasetAPI = {
       .then((res) => res.data);
   },
 
-  updateDatasetHeaderPreset: async (datasetId, tableInfo) => {
+  updateDatasetTableInfo: async (datasetId, tableInfo) => {
+    console.log(tableInfo);
     return api
-      .put(`api/datasets/${datasetId}/table-info`, tableInfo)
+      .put(`api/datasets/${datasetId}/table-info`, tableInfo, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
       .then((res) => res.status === 200);
   },
 
@@ -362,5 +367,5 @@ const realLabelsAPI = {
   },
 };
 
-export const datasetsAPI = mockDatasetsAPI;
-export const labelsAPI = mockLabelsAPI;
+export const datasetsAPI = realDatasetAPI;
+export const labelsAPI = realLabelsAPI;
