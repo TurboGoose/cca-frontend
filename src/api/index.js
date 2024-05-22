@@ -140,8 +140,8 @@ const mockDatasetsAPI = {
       headers: {
         excluded: [{ name: "text", width: 0 }],
         included: [
-          { name: "labels", width: 0 },
-          { name: "username", width: 0 },
+          { name: "labels", width: 10 },
+          { name: "username", width: 200 },
           { name: "sent", width: 0 },
         ],
       },

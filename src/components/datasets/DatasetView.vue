@@ -1,4 +1,3 @@
-const annotateItems = ref([]);
 <template>
   <v-tabs v-model="tab">
     <v-tab value="annotate">Annotate</v-tab>
@@ -196,12 +195,14 @@ const annotateItems = ref([]);
                   color="primary"
                   label="Show row numbers"
                   hide-details
-                  class="ms-5"
+                  class="ms-3 mt-n4"
                 ></v-switch>
               </v-sheet>
               <v-sheet>
-                <p>Included</p>
+                <p class="text-h6 ms-3">Included</p>
+                <v-divider></v-divider>
                 <v-data-table-virtual
+                  v-if="datasetHeaders"
                   :headers="columnHeaders"
                   :items="datasetHeaders.included"
                   height="200px"
@@ -210,31 +211,43 @@ const annotateItems = ref([]);
                 >
                   <template v-slot:item.actions="{ item }">
                     <v-icon
-                      class="me-2"
+                      class="me-1"
                       size="small"
                       @click="moveColumn(item, 'left')"
                     >
                       mdi-arrow-up
                     </v-icon>
                     <v-icon
-                      class="me-4"
+                      class="me-2"
                       size="small"
                       @click="moveColumn(item, 'right')"
                     >
                       mdi-arrow-down
                     </v-icon>
                     <v-icon
-                      class="me-4"
+                      class="me-1"
                       size="small"
                       @click="excludeColumn(item)"
                     >
                       mdi-close
                     </v-icon>
                   </template>
+
+                  <template v-slot:item.width="{ item }">
+                    <v-text-field
+                      v-model="item.width"
+                      density="compact"
+                      flat
+                      hide-details
+                      single-line
+                    >
+                    </v-text-field>
+                  </template>
                 </v-data-table-virtual>
 
-                <p>Excluded</p>
+                <p class="text-h6 ms-3">Excluded</p>
                 <v-data-table-virtual
+                  v-if="datasetHeaders"
                   :headers="columnHeaders"
                   :items="datasetHeaders.excluded"
                   height="200px"
@@ -243,7 +256,7 @@ const annotateItems = ref([]);
                 >
                   <template v-slot:item.actions="{ item }">
                     <v-icon
-                      class="me-4"
+                      class="me-1"
                       size="small"
                       @click="includeColumn(item)"
                     >
@@ -345,7 +358,7 @@ import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
 const tab = defineModel("tab");
-const openedDrawerGroups = ref(["columns"]);
+const openedDrawerGroups = ref(["labels"]);
 
 const datasetHeaders = ref();
 const tableHeaders = computed(() => {
@@ -355,6 +368,7 @@ const tableHeaders = computed(() => {
       headerList.push({
         title: "#",
         key: "num",
+        width: 1,
         sortable: false,
         filterable: false,
       });
@@ -362,6 +376,7 @@ const tableHeaders = computed(() => {
     for (const header of datasetHeaders.value.included) {
       const headerObj = {
         title: capitalizeFirstLetter(header.name),
+        width: header.width,
         key: header.name,
         sortable: false,
         filterable: false,
@@ -422,6 +437,12 @@ const columnHeaders = [
     key: "name",
     sortable: false,
     filterable: false,
+  },
+  {
+    title: "Width",
+    key: "width",
+    filterable: false,
+    sortable: false,
   },
   {
     title: "",
