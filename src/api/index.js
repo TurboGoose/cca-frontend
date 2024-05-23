@@ -41,7 +41,6 @@ const realDatasetAPI = {
   },
 
   updateDatasetTableInfo: async (datasetId, tableInfo) => {
-    console.log(tableInfo);
     return api
       .put(`api/datasets/${datasetId}/table-info`, tableInfo, {
         headers: {
@@ -149,7 +148,7 @@ const mockDatasetsAPI = {
     return {
       totalRows: 11265,
       headers: {
-        excluded: [{ name: "text", width: 0 }],
+        excluded: [{ name: "text", width: "0" }],
         included: [
           { name: "labels", width: "10" },
           { name: "username", width: "200" },
