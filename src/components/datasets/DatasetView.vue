@@ -41,9 +41,7 @@
             :headers="labelHeaders"
             :items="labels"
             :search="labelSearch"
-            height="200px"
             density="compact"
-            fixed-header
             item-value="id"
             select-strategy="single"
             return-object
@@ -78,12 +76,7 @@
 
                 <v-dialog v-model="addLabelDialog" max-width="500px">
                   <template v-slot:activator="{ props: addLabelDialog }">
-                    <v-btn
-                      class="ms-1"
-                      color="primary"
-                      dark
-                      v-bind="addLabelDialog"
-                    >
+                    <v-btn class="ms-1" color="primary" v-bind="addLabelDialog">
                       Add
                     </v-btn>
                   </template>
@@ -171,7 +164,6 @@
               variant="text"
               density="compact"
               @click="annotateRows"
-              @keyup.enter="annotateRows"
             >
               Annotate
             </v-btn>
@@ -203,9 +195,7 @@
               v-if="datasetHeaders"
               :headers="columnHeaders"
               :items="datasetHeaders.included"
-              height="200px"
               density="compact"
-              fixed-header
             >
               <template v-slot:item.actions="{ item }">
                 <v-icon
@@ -273,7 +263,8 @@
         :loading="annotateLoading"
         :items-per-page-options="[10, 50, 100, 250, 500]"
         :show-select="
-          annotateHeaders && annotateHeaders.some((header) => header.key === 'labels')
+          annotateHeaders &&
+          annotateHeaders.some((header) => header.key === 'labels')
         "
         @update:options="loadItemsForAnnotate"
       >
@@ -312,7 +303,7 @@
             loadItemsForSearch({ page: 1, itemsPerPage: searchItemsPerPage })
           "
           color="primary"
-          dark
+          class="ms-1"
           >Search</v-btn
         >
       </v-toolbar>
@@ -350,6 +341,8 @@ import {
   nextTick,
   computed,
   watch,
+  onMounted,
+  onUnmounted,
 } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
@@ -357,7 +350,7 @@ import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
 const tab = defineModel("tab");
-const openedDrawerGroups = ref(["columns"]);
+const openedDrawerGroups = ref(["labels"]);
 
 const datasetHeaders = ref();
 const annotateHeaders = computed(() => {
@@ -511,11 +504,9 @@ const updateDatasetHeadersPreset = async () => {
         route.params.datasetId,
         datasetHeaders.value
       );
-      console.log(
-        ok
-          ? `Header preset ${JSON.stringify(datasetHeaders.value)} saved`
-          : "Failed to save header preset"
-      );
+      if (!ok) {
+        console.log("Failed to save header preset");
+      }
     } catch (err) {
       console.log(err);
     }
@@ -542,6 +533,7 @@ const addAnnotation = (rowNum, labelId, added) => {
 };
 
 const annotateRows = async () => {
+  console.log("proc");
   if (selectedRows.value && currentLabel.value) {
     selectedRows.value.sort();
     let itemIndex = 0;
@@ -588,7 +580,6 @@ const annotateRows = async () => {
 const addLabel = () => {
   labelsAPI
     .saveLabel(
-      route.params.datasetId,
       route.params.datasetId,
       newLabelName.value
     )
@@ -708,7 +699,7 @@ const loadDatasetHeaders = () => {
     .getDatasetTableInfo(route.params.datasetId)
     .then(({ totalRows, headers }) => {
       annotateTotalItems.value = totalRows;
-      datasetHeaders.value = JSON.parse(headers);
+      datasetHeaders.value = headers;
     })
     .catch((err) => console.log(err));
 };
@@ -719,6 +710,15 @@ const loadDatasetLabels = () => {
     .then((labelArr) => (labels.value = labelArr))
     .catch((err) => console.log(err));
 };
+
+const keyDownHandler = (e) => {
+  if (e.keyCode === 13) {
+    // enter
+    annotateRows();
+  }
+};
+onMounted(() => window.addEventListener("keydown", keyDownHandler));
+onUnmounted(() => window.removeEventListener("keydown", keyDownHandler));
 
 onBeforeMount(() => {
   loadDatasetHeaders();
