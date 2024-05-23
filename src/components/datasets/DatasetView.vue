@@ -3,7 +3,6 @@
     <v-tab value="annotate">Annotate</v-tab>
     <v-tab :disabled="isSearchUnavailable" value="search">Search</v-tab>
   </v-tabs>
-
   <v-navigation-drawer location="right" width="350" permanent>
     <v-list v-model:opened="openedDrawerGroups">
       <v-list-group value="labels">
@@ -153,6 +152,7 @@
           </v-data-table-virtual>
           <v-sheet class="d-flex flex-row-reverse">
             <v-btn
+              id="annotateButton"
               class="d-block mt-3"
               :disabled="
                 !(
@@ -299,6 +299,7 @@
           class="ms-2"
         ></v-text-field>
         <v-btn
+          id="searchButton"
           @click="
             loadItemsForSearch({ page: 1, itemsPerPage: searchItemsPerPage })
           "
@@ -579,10 +580,7 @@ const annotateRows = async () => {
 
 const addLabel = () => {
   labelsAPI
-    .saveLabel(
-      route.params.datasetId,
-      newLabelName.value
-    )
+    .saveLabel(route.params.datasetId, newLabelName.value)
     .then((newLabel) => labels.value.unshift(newLabel));
   closeAddLabelDialog();
 };
@@ -713,8 +711,11 @@ const loadDatasetLabels = () => {
 
 const keyDownHandler = (e) => {
   if (e.keyCode === 13) {
-    // enter
-    annotateRows();
+    if (tab.value === "annotate") {
+      document.getElementById("annotateButton").click();
+    } else if (tab.value === "search") {
+      document.getElementById("searchButton").click();
+    }
   }
 };
 onMounted(() => window.addEventListener("keydown", keyDownHandler));
