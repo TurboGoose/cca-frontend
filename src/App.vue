@@ -35,7 +35,7 @@ import { ref, watch } from "vue";
 import { useTheme } from "vuetify";
 
 const theme = useTheme();
-const drawer = defineModel({ default: false });
+const drawer = ref();
 
 const darkTheme = ref(false);
 

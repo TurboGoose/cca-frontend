@@ -3,9 +3,9 @@
     <v-tab value="annotate">Annotate</v-tab>
     <v-tab :disabled="isSearchUnavailable" value="search">Search</v-tab>
   </v-tabs>
-  <v-navigation-drawer location="right" width="350" permanent>
+  <v-navigation-drawer location="right" width="370" permanent>
     <v-list v-model:opened="openedDrawerGroups">
-      <v-list-group value="labels">
+      <v-list-group v-if="tab === 'annotate'" value="labels">
         <template v-slot:activator="{ props }">
           <v-list-item
             v-bind="props"
@@ -350,7 +350,7 @@ import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
-const tab = defineModel("tab");
+const tab = ref();
 const openedDrawerGroups = ref(["labels"]);
 
 const datasetHeaders = ref();
@@ -400,7 +400,7 @@ const searchItems = ref([]);
 const searchLoading = ref(false);
 const searchTotalItems = ref(0);
 const searchItemsPerPage = ref(50);
-const searchQuery = defineModel({ default: "" });
+const searchQuery = ref("");
 const isSearchUnavailable = ref(true);
 
 const currentLabel = computed(() => {
