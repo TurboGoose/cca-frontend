@@ -1,4 +1,13 @@
 <template>
+  <v-alert
+    v-if="alertMessage"
+    :text="alertMessage"
+    type="error"
+    @click:close="alertMessage = null"
+    closable
+    tile
+  >
+  </v-alert>
   <v-data-table :headers="headers" :items="datasets" :search="search">
     <template v-slot:item.name="{ item }">
       <router-link :to="{ name: 'dataset', params: { datasetId: item.id } }">{{
@@ -143,12 +152,12 @@ import { datasetsAPI } from "@/api";
 import { convertBytes, formatTimestamp } from "@/util";
 
 const datasets = ref([]);
-
 const search = ref("");
+
+const alertMessage = ref();
 
 const uploadDialog = ref(false);
 const uploadedFile = ref();
-
 const renameDialog = ref(false);
 const renamedItem = ref();
 const newName = ref("");
@@ -188,17 +197,21 @@ const loadDatasetList = async () => {
     const actualDatasets = await datasetsAPI.getDatasetList();
     datasets.value = [...actualDatasets];
   } catch (error) {
-    console.log(error);
+    alertMessage.value = "Failed to retrieve dataset list";
   }
 };
 
 onBeforeMount(() => loadDatasetList());
 
 const uploadDataset = async () => {
-  datasetsAPI
-    .uploadDataset(uploadedFile.value)
-    .then((newDataset) => datasets.value.push(newDataset));
-  closeUploadDialog();
+  try {
+    const newDataset = await datasetsAPI.uploadDataset(uploadedFile.value);
+    datasets.value.push(newDataset);
+  } catch (err) {
+    alertMessage.value = err.response.data.message;
+  } finally {
+    closeUploadDialog();
+  }
 };
 
 const closeUploadDialog = async () => {
@@ -215,12 +228,15 @@ const openRenameDialog = (datasetItem) => {
 
 const renameDataset = async () => {
   if (renamedItem.value.name !== newName.value) {
-    const renamed = await datasetsAPI.updateDataset(
-      renamedItem.value.id,
-      newName.value
-    );
-    // handle error
-    renamedItem.value.name = newName.value;
+    try {
+      const renamed = await datasetsAPI.updateDataset(
+        renamedItem.value.id,
+        newName.value
+      );
+      renamedItem.value.name = newName.value;
+    } catch (err) {
+      alertMessage.value = err.response.data.message;
+    }
   }
   newName.value = "";
   closeRenameDialog();
@@ -244,7 +260,11 @@ const deleteDataset = async (datasetItem) => {
 
 const downloadDataset = (datasetItem, ext) => {
   datasetsAPI
-  .downloadDataset(datasetItem.id, ext)
-  .then(() => console.log(`Dataset ${datasetItem.name}.${ext} downloaded`));
+    .downloadDataset(datasetItem.id, ext)
+    .then(() => console.log(`Dataset ${datasetItem.name}.${ext} downloaded`))
+    .catch(
+      (err) =>
+        (alertMessage.value = `Failed to download ${datasetItem.name}.${ext}`)
+    );
 };
 </script>
