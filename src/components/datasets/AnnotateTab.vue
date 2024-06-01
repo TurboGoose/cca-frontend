@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer location="right" width="370" permanent>
+  <v-navigation-drawer v-if="active" location="right" width="370" permanent>
     <v-list v-model:opened="openedDrawerGroups">
       <v-list-group value="labels">
         <template v-slot:activator="{ props }">
@@ -250,17 +250,17 @@
     v-model="selectedRows"
     item-value="num"
     select-strategy="page"
-    v-model:items-per-page="annotateItemsPerPage"
-    :items="annotateItems"
+    v-model:items-per-page="itemsPerPage"
+    :items="items"
     :headers="annotateHeaders"
-    :items-length="annotateTotalItems"
-    :loading="annotateLoading"
+    :items-length="totalItems"
+    :loading="loading"
     :items-per-page-options="[10, 50, 100, 250, 500]"
     :show-select="
       annotateHeaders &&
       annotateHeaders.some((header) => header.key === 'labels')
     "
-    @update:options="loadItemsForAnnotate"
+    @update:options="loadItems"
   >
     <template v-slot:item.labels="{ item }">
       <v-chip-group>
@@ -292,6 +292,11 @@ import {
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
+
+const props = defineProps({
+  active: Boolean,
+  required: true,
+});
 
 const route = useRoute();
 const openedDrawerGroups = ref(["labels"]);
@@ -325,11 +330,11 @@ const annotateHeaders = computed(() => {
   return headerList;
 });
 
-const annotateItems = ref([]);
-const annotateLoading = ref(true);
-const annotateTotalItems = ref(0);
-const annotateItemsPerPage = ref(50);
-const annotatePage = ref(1);
+const items = ref([]);
+const loading = ref(true);
+const totalItems = ref(0);
+const itemsPerPage = ref(50);
+const page = ref(1);
 const rowNumsShown = ref(false);
 
 const selectedRows = ref([]);
@@ -472,12 +477,12 @@ const annotateRows = async () => {
     let itemIndex = 0;
     for (const rowNum of selectedRows.value) {
       while (
-        itemIndex < annotateItems.value.length &&
-        annotateItems.value[itemIndex].num != rowNum
+        itemIndex < items.value.length &&
+        items.value[itemIndex].num != rowNum
       ) {
         itemIndex++;
       }
-      const itemLabels = annotateItems.value[itemIndex].labels;
+      const itemLabels = items.value[itemIndex].labels;
       if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
         addAnnotation(rowNum, currentLabel.value.id, true);
       }
@@ -492,12 +497,12 @@ const annotateRows = async () => {
       let itemIndex = 0;
       for (const rowNum of selectedRows.value) {
         while (
-          itemIndex < annotateItems.value.length &&
-          annotateItems.value[itemIndex].num != rowNum
+          itemIndex < items.value.length &&
+          items.value[itemIndex].num != rowNum
         ) {
           itemIndex++;
         }
-        const itemLabels = annotateItems.value[itemIndex].labels;
+        const itemLabels = items.value[itemIndex].labels;
         if (!itemLabels.some((lab) => lab.id === currentLabel.value.id)) {
           itemLabels.push(currentLabel.value);
         }
@@ -538,7 +543,7 @@ const renameLabel = async () => {
         newLabelName.value
       );
       renamedLabel.value.name = renamed.name;
-      loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+      loadItems({ annotatePage: page, annotateItemsPerPage: itemsPerPage });
     } catch (err) {
       console.log(err);
     }
@@ -558,14 +563,14 @@ const deleteLabel = async (labelItem) => {
   if (ok) {
     const index = labels.value.indexOf(labelItem);
     labels.value.splice(index, 1);
-    loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+    loadItems({ annotatePage: page, annotateItemsPerPage: itemsPerPage });
   } else {
     console.log(`Label ${labelItem.id} was not deleted`);
   }
 };
 
-const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
-  annotateLoading.value = true;
+const loadItems = ({ page, itemsPerPage }) => {
+  loading.value = true;
   datasetsAPI
     .getDatasetPage(route.params.datasetId, page, itemsPerPage)
     .then((items) => {
@@ -573,17 +578,17 @@ const loadItemsForAnnotate = ({ page, itemsPerPage }) => {
       for (let i = 0; i < items.length; i++) {
         items[i]["num"] = offset + i;
       }
-      annotateItems.value = items;
+      items.value = items;
     })
     .catch((err) => console.log(err)) // catch properly
-    .finally(() => (annotateLoading.value = false));
+    .finally(() => (loading.value = false));
 };
 
 const loadDatasetHeaders = () => {
   datasetsAPI
     .getDatasetTableInfo(route.params.datasetId)
     .then(({ totalRows, headers }) => {
-      annotateTotalItems.value = totalRows;
+      totalItems.value = totalRows;
       datasetHeaders.value = headers;
     })
     .catch((err) => console.log(err));
@@ -597,7 +602,7 @@ const loadDatasetLabels = () => {
 };
 
 const keyDownHandler = (e) => {
-  if (e.keyCode === 13) {
+  if (props.active && e.keyCode === 13) {
     document.getElementById("annotateButton").click();
   }
 };
