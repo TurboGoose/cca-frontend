@@ -147,19 +147,8 @@ const mockDatasetsAPI = {
   getDatasetTableInfo: async (datasetId) => {
     return {
       totalRows: 11265,
-      headers: {
-        excluded: [{ name: "text", width: "0" }],
-        included: [
-          { name: "labels", width: "10" },
-          { name: "username", width: "200" },
-          { name: "sent", width: "0" },
-        ],
-      },
+      headers: ["labels", "username", "sent"],
     };
-  },
-
-  updateDatasetHeaderPreset: async (datasetId, tableInfo) => {
-    return true;
   },
 
   getDatasetPage: async (datasetId, page, size) => {

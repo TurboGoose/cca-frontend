@@ -13,7 +13,7 @@
             prepend-icon="mdi-tag-multiple"
           ></v-list-item
         ></template>
-        <v-sheet class="ma-3">
+        <v-sheet v-if="(tab = 'annotate')" class="ma-3">
           <v-sheet class="mb-3">
             Current label:
             <v-chip
@@ -192,9 +192,9 @@
             <p class="text-h6 ms-3">Included</p>
             <v-divider></v-divider>
             <v-data-table-virtual
-              v-if="datasetHeaders"
+              v-if="tableInfo"
               :headers="columnHeaders"
-              :items="datasetHeaders.included"
+              :items="includedColumns"
               density="compact"
             >
               <template v-slot:item.actions="{ item }">
@@ -229,11 +229,12 @@
               </template>
             </v-data-table-virtual>
 
-            <p class="text-h6 ms-3">Excluded</p>
+            <p class="text-h6 ms-3 mt-3">Excluded</p>
+            <v-divider></v-divider>
             <v-data-table-virtual
-              v-if="datasetHeaders"
+              v-if="tableInfo"
               :headers="columnHeaders"
-              :items="datasetHeaders.excluded"
+              :items="excludedColumns"
               height="200px"
               density="compact"
               fixed-header
@@ -316,7 +317,7 @@
         :headers="searchHeaders"
         :items-length="searchTotalItems"
         :loading="searchLoading"
-        :page="annotatePage"
+        :page="searchPage"
         :items-per-page-options="[10, 50, 100, 250, 500]"
         @update:options="loadItemsForSearch"
       >
@@ -338,12 +339,11 @@
 import {
   ref,
   onBeforeMount,
-  defineModel,
   nextTick,
   computed,
-  watch,
   onMounted,
   onUnmounted,
+  watch,
 } from "vue";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
@@ -351,12 +351,12 @@ import { capitalizeFirstLetter } from "@/util";
 
 const route = useRoute();
 const tab = ref();
-const openedDrawerGroups = ref(["labels"]);
+const openedDrawerGroups = ref(["labels", "columns"]);
 
-const datasetHeaders = ref();
+const tableInfo = ref();
 const annotateHeaders = computed(() => {
   const headerList = [];
-  if (datasetHeaders.value) {
+  if (tableInfo.value) {
     if (rowNumsShown.value) {
       headerList.push({
         title: "#",
@@ -366,8 +366,9 @@ const annotateHeaders = computed(() => {
         filterable: false,
       });
     }
-    if (datasetHeaders.value.included) {
-      for (const header of datasetHeaders.value.included) {
+    const included = tableInfo.value.headers.annotate.included;
+    if (included) {
+      for (const header of included) {
         const headerObj = {
           title: capitalizeFirstLetter(header.name),
           width: header.width,
@@ -383,7 +384,32 @@ const annotateHeaders = computed(() => {
 });
 
 const searchHeaders = computed(() => {
-  return annotateHeaders.value.filter((header) => header.key !== "labels");
+  const headerList = [];
+  if (tableInfo.value) {
+    if (rowNumsShown.value) {
+      headerList.push({
+        title: "#",
+        key: "num",
+        width: 1,
+        sortable: false,
+        filterable: false,
+      });
+    }
+    const included = tableInfo.value.headers.search.included;
+    if (included) {
+      for (const header of included) {
+        const headerObj = {
+          title: capitalizeFirstLetter(header.name),
+          width: header.width,
+          key: header.name,
+          sortable: false,
+          filterable: false,
+        };
+        headerList.push(headerObj);
+      }
+    }
+  }
+  return headerList;
 });
 
 const annotateItems = ref([]);
@@ -391,15 +417,16 @@ const annotateLoading = ref(true);
 const annotateTotalItems = ref(0);
 const annotateItemsPerPage = ref(50);
 const annotatePage = ref(1);
-const rowNumsShown = ref(false);
-
 const selectedRows = ref([]);
 const annotationDiff = ref([]);
+
+const rowNumsShown = ref(false);
 
 const searchItems = ref([]);
 const searchLoading = ref(false);
 const searchTotalItems = ref(0);
 const searchItemsPerPage = ref(50);
+const searchPage = ref(1);
 const searchQuery = ref("");
 const isSearchUnavailable = ref(true);
 
@@ -430,6 +457,12 @@ const labelHeaders = [
   },
 ];
 
+const includedColumns = computed(
+  () => tableInfo.value.headers[tab.value].included
+);
+const excludedColumns = computed(
+  () => tableInfo.value.headers[tab.value].excluded
+);
 const columnHeaders = [
   {
     title: "Name",
@@ -453,7 +486,7 @@ const columnHeaders = [
 ];
 
 const moveColumn = (columnItem, direction) => {
-  const included = datasetHeaders.value.included;
+  const included = includedColumns.value;
   const index = included.findIndex((elem) => elem === columnItem);
   if (index === -1) {
     console.log(`Cannot find header ${columnItem} in included header list`);
@@ -474,16 +507,16 @@ const moveColumn = (columnItem, direction) => {
 const includeColumn = (columnItem) => {
   changeColumnVisibility(
     columnItem,
-    datasetHeaders.value.excluded,
-    datasetHeaders.value.included
+    excludedColumns.value,
+    includedColumns.value
   );
 };
 
 const excludeColumn = (columnItem) => {
   changeColumnVisibility(
     columnItem,
-    datasetHeaders.value.included,
-    datasetHeaders.value.excluded
+    includedColumns.value,
+    excludedColumns.value
   );
 };
 
@@ -495,29 +528,6 @@ const changeColumnVisibility = (columnItem, from, to) => {
   from.splice(index, 1);
   to.push(columnItem);
 };
-
-let needToUpdate = false;
-
-const updateDatasetHeadersPreset = async () => {
-  if (needToUpdate && datasetHeaders.value) {
-    try {
-      const ok = await datasetsAPI.updateDatasetTableInfo(
-        route.params.datasetId,
-        datasetHeaders.value
-      );
-      if (!ok) {
-        console.log("Failed to save header preset");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-    needToUpdate = false;
-  }
-  setTimeout(updateDatasetHeadersPreset, 5000);
-};
-updateDatasetHeadersPreset();
-
-watch(datasetHeaders, () => (needToUpdate = true), { deep: "true" });
 
 const addAnnotation = (rowNum, labelId, added) => {
   const reversedAnnotationIndx = annotationDiff.value.findIndex(
@@ -692,14 +702,51 @@ const pingDatasetSearchStatus = async () => {
 };
 pingDatasetSearchStatus();
 
-const loadDatasetHeaders = () => {
-  datasetsAPI
-    .getDatasetTableInfo(route.params.datasetId)
-    .then(({ totalRows, headers }) => {
-      annotateTotalItems.value = totalRows;
-      datasetHeaders.value = headers;
-    })
-    .catch((err) => console.log(err));
+watch(
+  tableInfo,
+  (info) => {
+    localStorage.setItem(
+      `cca-dataset-${route.params.datasetId}`,
+      JSON.stringify(info)
+    );
+  },
+  { deep: "true" }
+);
+
+const loadDatasetTableInfo = async () => {
+  let localTableInfo = JSON.parse(
+    localStorage.getItem(`cca-dataset-${route.params.datasetId}`)
+  );
+  if (!localTableInfo) {
+    try {
+      const serverTableInfo = await datasetsAPI.getDatasetTableInfo(
+        route.params.datasetId
+      );
+      annotateTotalItems.value = serverTableInfo.totalRows;
+      const headersInfo = [];
+      for (const header of serverTableInfo.headers) {
+        headersInfo.push({ name: header, width: "0" });
+      }
+      serverTableInfo.headers = {
+        annotate: {
+          included: [{ name: "labels", width: "0" }, ...headersInfo],
+          excluded: [],
+        },
+        search: {
+          included: [...headersInfo],
+          excluded: [],
+        },
+      };
+      localStorage.setItem(
+        `cca-dataset-${route.params.datasetId}`,
+        JSON.stringify(serverTableInfo)
+      );
+      localTableInfo = serverTableInfo;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  tableInfo.value = localTableInfo;
 };
 
 const loadDatasetLabels = () => {
@@ -722,7 +769,7 @@ onMounted(() => window.addEventListener("keydown", keyDownHandler));
 onUnmounted(() => window.removeEventListener("keydown", keyDownHandler));
 
 onBeforeMount(() => {
-  loadDatasetHeaders();
+  loadDatasetTableInfo();
   loadDatasetLabels();
 });
 </script>
