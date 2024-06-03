@@ -6,6 +6,7 @@
     @click:close="alertMessage = null"
     closable
     tile
+    flat
   >
   </v-alert>
   <v-data-table :headers="headers" :items="datasets" :search="search">
@@ -197,6 +198,7 @@ const loadDatasetList = async () => {
     const actualDatasets = await datasetsAPI.getDatasetList();
     datasets.value = [...actualDatasets];
   } catch (error) {
+    console.log(error);
     alertMessage.value = "Failed to retrieve dataset list";
   }
 };

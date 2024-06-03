@@ -19,8 +19,9 @@
             <v-chip
               v-if="currentLabel"
               label
+              :color="currentLabel.color"
               density="compact"
-              variant="outlined"
+              variant="flat"
               class="ms-1"
               >{{ currentLabel.name }}</v-chip
             >
@@ -46,11 +47,21 @@
             return-object
             show-select
           >
+            <template v-slot:item.name="{ item }">
+              <v-chip
+                label
+                :color="item.color"
+                density="compact"
+                variant="flat"
+                class="ms-1"
+                >{{ item.name }}</v-chip
+              >
+            </template>
             <template v-slot:item.actions="{ item }">
               <v-icon
                 class="me-2"
                 size="small"
-                @click="openRenameLabelDialog(item)"
+                @click="openUpdateLabelDialog(item)"
               >
                 mdi-pencil
               </v-icon>
@@ -86,9 +97,16 @@
 
                     <v-card-text>
                       <v-text-field
-                        v-model="newLabelName"
-                        label="New label name"
+                        v-model="newLabel.name"
+                        label="Name"
                       ></v-text-field>
+                      <p class="my-2 text-h6">Color</p>
+                      <v-color-picker
+                        v-model="newLabel.color"
+                        :modes="['hsl', 'rgb', 'hex']"
+                        show-swatches
+                      >
+                      </v-color-picker>
                     </v-card-text>
 
                     <v-card-actions>
@@ -111,17 +129,24 @@
                   </v-card>
                 </v-dialog>
 
-                <v-dialog v-model="renameLabelDialog" max-width="500px">
+                <v-dialog v-model="updateLabelDialog" max-width="500px">
                   <v-card>
                     <v-card-title>
-                      <span class="text-h5">Rename label</span>
+                      <span class="text-h5">Update label</span>
                     </v-card-title>
 
                     <v-card-text>
                       <v-text-field
-                        v-model="newLabelName"
-                        label="New dataset name"
+                        v-model="updatedLabel.name"
+                        label="New label name"
                       ></v-text-field>
+                      <p class="my-2 text-h6">Color</p>
+                      <v-color-picker
+                        v-model="updatedLabel.color"
+                        :modes="['hsl', 'rgb', 'hex']"
+                        show-swatches
+                      >
+                      </v-color-picker>
                     </v-card-text>
 
                     <v-card-actions>
@@ -129,14 +154,14 @@
                       <v-btn
                         color="blue-darken-1"
                         variant="text"
-                        @click="closeRenameLabelDialog"
+                        @click="closeUpdateLabelDialog"
                       >
                         Cancel
                       </v-btn>
                       <v-btn
                         color="blue-darken-1"
                         variant="text"
-                        @click="renameLabel"
+                        @click="updateLabel"
                       >
                         Save
                       </v-btn>
@@ -270,18 +295,21 @@
         @update:options="loadItemsForAnnotate"
       >
         <template v-slot:item.labels="{ item }">
-          <v-chip-group>
+          <v-sheet class="d-flex flex-wrap">
             <v-chip
+              class="ma-1"
+              density="compact"
+              :color="label.color"
               label
-              closable
-              variant="outlined"
+              variant="flat"
               v-for="label in item.labels"
               :key="label.id"
+              closable
               @click:close="addAnnotation(item.num, label.id, false)"
             >
               {{ label.name }}
             </v-chip>
-          </v-chip-group>
+          </v-sheet>
         </template>
       </v-data-table-server>
     </v-tabs-window-item>
@@ -439,10 +467,12 @@ const currentLabel = computed(() => {
 const selectedLabels = ref();
 const labels = ref([]);
 const labelSearch = ref("");
-const renameLabelDialog = ref(false);
-const newLabelName = ref("");
-const renamedLabel = ref();
+
+const updateLabelDialog = ref(false);
+const updatedLabel = ref({});
+
 const addLabelDialog = ref(false);
+const newLabel = ref({});
 const labelHeaders = [
   {
     title: "Name",
@@ -544,7 +574,6 @@ const addAnnotation = (rowNum, labelId, added) => {
 };
 
 const annotateRows = async () => {
-  console.log("proc");
   if (selectedRows.value && currentLabel.value) {
     selectedRows.value.sort();
     let itemIndex = 0;
@@ -588,47 +617,53 @@ const annotateRows = async () => {
   annotationDiff.value.length = 0;
 };
 
-const addLabel = () => {
-  labelsAPI
-    .saveLabel(route.params.datasetId, newLabelName.value)
-    .then((newLabel) => labels.value.unshift(newLabel));
-  closeAddLabelDialog();
+const addLabel = async () => {
+  try {
+    const createdLabel = await labelsAPI.saveLabel(
+      route.params.datasetId,
+      newLabel.value
+    );
+    labels.value.unshift(createdLabel);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    closeAddLabelDialog();
+  }
 };
 
 const closeAddLabelDialog = async () => {
   addLabelDialog.value = false;
   await nextTick();
-  newLabelName.value = "";
+  newLabel.value = {};
 };
 
-const openRenameLabelDialog = (labelItem) => {
-  newLabelName.value = labelItem.name;
-  renamedLabel.value = labelItem;
-  renameLabelDialog.value = true;
+let originalLabelItem;
+const openUpdateLabelDialog = (labelItem) => {
+  originalLabelItem = labelItem;
+  updatedLabel.value = { ...labelItem };
+  updateLabelDialog.value = true;
 };
 
-const renameLabel = async () => {
-  if (renamedLabel.value.name !== newLabelName.value) {
-    try {
-      const renamed = await labelsAPI.updateLabel(
-        route.params.datasetId,
-        renamedLabel.value.id,
-        newLabelName.value
-      );
-      renamedLabel.value.name = renamed.name;
-      loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
-    } catch (err) {
-      console.log(err);
-    }
+const updateLabel = async () => {
+  try {
+    const updated = await labelsAPI.updateLabel(
+      route.params.datasetId,
+      updatedLabel.value
+    );
+    originalLabelItem.name = updated.name;
+    originalLabelItem.color = updated.color;
+    loadItemsForAnnotate({ annotatePage, annotateItemsPerPage });
+  } catch (err) {
+    console.log(err);
+  } finally {
+    closeUpdateLabelDialog();
   }
-  newLabelName.value = "";
-  closeRenameLabelDialog();
 };
 
-const closeRenameLabelDialog = async () => {
-  renameLabelDialog.value = false;
+const closeUpdateLabelDialog = async () => {
+  updateLabelDialog.value = false;
   await nextTick();
-  newLabelName.value = "";
+  updatedLabel.value = {};
 };
 
 const deleteLabel = async (labelItem) => {

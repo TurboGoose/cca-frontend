@@ -1,6 +1,6 @@
 import { api } from "@/plugins";
 
-const realDatasetAPI = {
+const realDatasetsAPI = {
   getDatasetList: async () => {
     return api.get("/api/datasets").then((res) => res.data);
   },
@@ -38,16 +38,6 @@ const realDatasetAPI = {
     return api
       .get(`api/datasets/${datasetId}/table-info`)
       .then((res) => res.data);
-  },
-
-  updateDatasetTableInfo: async (datasetId, tableInfo) => {
-    return api
-      .put(`api/datasets/${datasetId}/table-info`, tableInfo, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => res.status === 200);
   },
 
   getDatasetPage: async (datasetId, page, size) => {
@@ -318,12 +308,12 @@ const mockDatasetsAPI = {
 };
 
 const mockLabelsAPI = {
-  saveLabel: async (datasetId, newName) => {
-    return { id: 33, name: newName };
+  saveLabel: async (datasetId, { name, color }) => {
+    return { id: 33, name, color };
   },
 
-  updateLabel: async (datasetId, labelId, newName) => {
-    return { id: labelId, name: newName };
+  updateLabel: async (datasetId, { id, name, color }) => {
+    return { id, name, color };
   },
 
   deleteLabel: async (datasetId, labelId) => {
@@ -332,19 +322,31 @@ const mockLabelsAPI = {
 };
 
 const realLabelsAPI = {
-  saveLabel: async (datasetId, newName) => {
+  saveLabel: async (datasetId, { name, color }) => {
     return api
-      .post(`/api/datasets/${datasetId}/labels`, null, {
-        params: { name: newName },
-      })
+      .post(
+        `/api/datasets/${datasetId}/labels`,
+        { name, color },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
       .then((res) => res.data);
   },
 
-  updateLabel: async (datasetId, labelId, newName) => {
+  updateLabel: async (datasetId, { id, name, color }) => {
     return api
-      .patch(`/api/datasets/${datasetId}/labels/${labelId}`, null, {
-        params: { name: newName },
-      })
+      .patch(
+        `/api/datasets/${datasetId}/labels/${id}`,
+        { name, color },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
       .then((res) => res.data);
   },
 
@@ -355,5 +357,5 @@ const realLabelsAPI = {
   },
 };
 
-export const datasetsAPI = realDatasetAPI;
+export const datasetsAPI = realDatasetsAPI;
 export const labelsAPI = realLabelsAPI;
