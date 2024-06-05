@@ -279,6 +279,7 @@
     <v-tabs-window-item value="annotate">
       <v-data-table-server
         v-if="annotateHeaders"
+        id="annotation-data-table"
         v-model="selectedRows"
         item-value="num"
         select-strategy="page"
@@ -293,6 +294,7 @@
           annotateHeaders.some((header) => header.key === 'labels')
         "
         @update:options="loadItemsForAnnotate"
+        @update:page="goTo('#app')"
       >
         <template v-slot:item.labels="{ item }">
           <v-sheet class="d-flex flex-wrap">
@@ -347,6 +349,7 @@
         :loading="searchLoading"
         :page="searchPage"
         :items-per-page-options="[10, 50, 100, 250, 500]"
+        @update:page="goTo('#app')"
         @update:options="loadItemsForSearch"
       >
         <template v-slot:item="{ item }">
@@ -373,10 +376,12 @@ import {
   onUnmounted,
   watch,
 } from "vue";
+import { useGoTo } from "vuetify";
 import { datasetsAPI, labelsAPI } from "@/api";
 import { useRoute } from "vue-router";
 import { capitalizeFirstLetter } from "@/util";
 
+const goTo = useGoTo();
 const route = useRoute();
 const tab = ref();
 const openedDrawerGroups = ref(["labels", "columns"]);
