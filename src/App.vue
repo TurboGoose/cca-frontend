@@ -1,8 +1,7 @@
 <template>
   <v-app>
-    <v-app-bar>
+    <v-app-bar density="compact" flat class="border-b-sm">
       <v-app-bar-title>CCA</v-app-bar-title>
-
       <template v-slot:append>
         <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       </template>

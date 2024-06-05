@@ -1,5 +1,5 @@
 <template>
-  <v-tabs v-model="tab">
+  <v-tabs v-model="tab" density="compact" class="border-b-sm">
     <v-tab value="annotate">Annotate</v-tab>
     <v-tab :disabled="isSearchUnavailable" value="search">Search</v-tab>
   </v-tabs>
