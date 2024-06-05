@@ -442,7 +442,7 @@ const searchHeaders = computed(() => {
 
 const annotateItems = ref([]);
 const annotateLoading = ref(true);
-const annotateTotalItems = ref(0);
+const annotateTotalItems = computed(() => tableInfo.value?.totalRows ?? 0);
 const annotateItemsPerPage = ref(50);
 const annotatePage = ref(1);
 const selectedRows = ref([]);
@@ -757,7 +757,6 @@ const loadDatasetTableInfo = async () => {
       const serverTableInfo = await datasetsAPI.getDatasetTableInfo(
         route.params.datasetId
       );
-      annotateTotalItems.value = serverTableInfo.totalRows;
       const headersInfo = [];
       for (const header of serverTableInfo.headers) {
         headersInfo.push({ name: header, width: "0" });
